@@ -90,7 +90,11 @@
                     proc-value)])))
 
 ;; Establishing which primitives we support
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define *prim-proc-names* '(+ - * / add1 sub1 cons = < > <= >=
+  car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
+  list null? assq eq? equal? atom? length list->vector list? pair? procedure?
+  vector->list vector make-vector vector-ref vector? number? symbol? zero?
+  set-car! set-cdr! vector-set! display newline))
 
 ;; Initializes a global environment with only primitives
 (define global-env
@@ -106,10 +110,54 @@
       [(+) (apply + args)]
       [(-) (apply - args)]
       [(*) (apply * args)]
+      [(/) (apply / args)]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
-      [(cons) (cons (1st args) (2nd args))]
+      [(zero?) (zero? (1st args))]
+      [(not) (not (1st args))]
       [(=) (apply = args)]
+      [(<) (apply < args)]
+      [(>) (apply > args)]
+      [(>=) (apply >= args)]
+      [(<=) (apply <= args)]
+      [(cons) (cons (1st args) (2nd args))]
+      [(car) (car (1st args))]
+      [(cdr) (cdr (1st args))]
+      [(caar) (caar (1st args))]
+      [(cadr) (cadr (1st args))]
+      [(cdar) (cdar (1st args))]
+      [(cddr) (cddr (1st args))]
+      [(caaar) (caaar (1st args))]
+      [(caadr) (caadr (1st args))]
+      [(cadar) (cadar (1st args))]
+      [(caddr) (caddr (1st args))]
+      [(cdaar) (cdaar (1st args))]
+      [(cdadr) (cdadr (1st args))]
+      [(cddar) (cddar (1st args))]
+      [(cdddr) (cdddr (1st args))]
+      [(list) args]
+      [(null?) (null? (1st args))]
+      [(assq) (assq (1st args) (2nd args))]
+      [(eq?) (eq? (1st args) (2nd args))]
+      [(equal?) (equal? (1st args) (2nd args))]
+      [(atom?) (atom? (1st args))]
+      [(length) (length (1st args))]
+      [(list->vector) (list->vector (1st args))]
+      [(list?) (list? (1st args))]
+      [(pair?) (pair? (1st args))]
+      [(procedure?) (procedure? (1st args))]
+      [(vector->list) (vector->list (1st args))]
+      [(vector) (apply vector args)]
+      [(make-vector) (if (null? (cdr args)) (make-vector (1st args)) (make-vector (1st args) (2nd args)))]
+      [(vector-ref) (vector-ref (1st args) (2nd args))]
+      [(vector?) (vector? (1st args))]
+      [(number?) (number? (1st args))]
+      [(symbol?) (symbol? (1st args))]
+      [(set-car!) (set-car! (1st args) (2nd args))]
+      [(set-cdr!) (set-cdr! (1st args) (2nd args))]
+      [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
+      [(display) (if (null? (cdr args)) (display (1st args)) (display (1st args) (2nd args)))]
+      [(newline) (if (null? args) (newline) (newline (1st args)))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
