@@ -13,7 +13,7 @@
   (lambda (datum)
     (cond
      [(symbol? datum) (var-exp datum)]
-     [(lit? datum) (lit-exp datum)]
+     [(literal? datum) (if (list? datum) (lit-exp (2nd datum)) (lit-exp datum))]
      [(list? datum)
       (cond ; Everthing in here is a list of expressions. Where the bulk is.
         [(equal? (car datum) 'lambda) ; lambda-exp
@@ -72,7 +72,17 @@
             (cons 
               (let-declaration-exp (parse-exp (caar rest)) (parse-exp (cadar rest)))
               (inner-helper (cdr rest))))))))
-
+			  
+(define literal?
+  (lambda (exp)
+    (or 
+      (boolean? exp)
+      (number? exp)
+      (string? exp)
+      (null? exp)
+      (vector? exp)
+      (char? exp)
+      (equal? 'quote (car exp)))))
 
 (define unparse-exp
   (lambda (exp)

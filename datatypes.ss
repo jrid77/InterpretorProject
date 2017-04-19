@@ -15,7 +15,7 @@
       (null? exp)
       (vector? exp)
       (char? exp)
-      (and (equal? 'quote (car exp)) (list? (cdr exp))))))
+      (list? exp))))
 
 (define-datatype expression expression?
   [var-exp
