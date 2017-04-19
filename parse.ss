@@ -7,20 +7,7 @@
 (define 2nd cadr)
 (define 3rd caddr)
 (define 4th cadddr)
-; (define parse-exp         
-;   (lambda (datum)
-;     (cond
-;      [(symbol? datum) (var-exp datum)]
-;      [(number? datum) (lit-exp datum)]
-;      [(pair? datum)
-;       (cond
-; 	   [(eqv? 'let (1st datum))
-; 		(let-exp (map car (2nd datum))
-; 				 (map parse-exp (map cadr (2nd datum)))
-; 				 (map parse-exp (cddr datum)))]
-;        [else (app-exp (parse-exp (1st datum))
-; 		      (map parse-exp (cdr datum)))])]
-;      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
+
 
 (define parse-exp         
   (lambda (datum)
@@ -101,7 +88,7 @@
               declaration))
           (map unparse-exp body))]
 ;     [lambda-var-exp (body) (append (list 'lambda) (map unparse-exp exp))]
-          (list (unparse-exp els)))]
+       ;   (list (unparse-exp els)))]
       [if-exp (con then)
         (append
           (list 'if (unparse-exp con))
@@ -109,7 +96,7 @@
       [if-else-exp (con then els) 
         (append 
           (list 'if (unparse-exp con)) 
-          (list (unparse-exp then)) 
+          (list (unparse-exp then)))]
       [named-let-exp (name declaration body)
         (append
           (list 'let name (map unparse-exp declaration))

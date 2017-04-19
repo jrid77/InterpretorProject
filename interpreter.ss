@@ -35,14 +35,30 @@
 								(lambda () (eopl:error 'apply-env 
 									"variable not found in environment: ~s"
 									id)))))]
-	  [let-exp (vars exp bodies)
-		(eval-bodies bodies
-					 (extend-env vars (eval-rands exp env) env))]
+	  [let-exp (declaration body)
+		(eval-bodies body
+					 (extend-env (map unparse-exp (map extract-let-vars declaration)) (eval-rands (map extract-let-bindings declaration) env) env))]
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator env)]
               [args (eval-rands rands env)])
           (apply-proc proc-value args))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
+
+
+;;; Pulling vars out of let-exp
+(define extract-let-vars
+  (lambda (x)
+    (cases expression x
+      [let-declaration-exp (var binding) var]
+      [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
+
+;;; Pulling bindings out of let-exp
+(define extract-let-bindings
+  (lambda (x)
+    (cases expression x
+      [let-declaration-exp (var binding) binding]
+      [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
+
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
