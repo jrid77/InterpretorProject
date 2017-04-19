@@ -35,19 +35,19 @@
   [lambda-exp
     (declaration (lambda (x) (or (list-of expression?) (symbol? x))))
     (body (list-of expression?))]
-  [lambda-var-exp
-    (body (lambda (x)
-        (cond 
-          [(symbol? x) #t]
-          [(list? x)
-            (let recursive-helper ([rest x])
-              (if (or (null? rest) (symbol? rest))
-                #t
-                (and (symbol? (car rest)) (recursive-helper (cdr rest)))))]
-          [else #f])))]
+  ; [lambda-var-exp
+  ;   (body (lambda (x)
+  ;       (cond
+  ;         [(symbol? x) #t]
+  ;         [(list? x)
+  ;           (let recursive-helper ([rest x])
+  ;             (if (or (null? rest) (symbol? rest))
+  ;               #t
+  ;               (and (symbol? (car rest)) (recursive-helper (cdr rest)))))]
+  ;         [else #f])))]
   [app-exp
    (rator expression?)
-   (rand (list-of expression?))]
+   (rands (list-of expression?))]
   [if-else-exp
     (con expression?)
     (then expression?)
@@ -58,9 +58,9 @@
   [let-exp
     (declaration (list-of expression?))
     (body (list-of expression?))]
-  [let-single-exp
+  [let-declaration-exp
     (var expression?)
-    (body expression?)]
+    (binding expression?)]
   [named-let-exp
     (name expression?)
     (declaration (list-of expression?))
