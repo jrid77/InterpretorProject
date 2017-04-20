@@ -64,17 +64,7 @@
     (body (list-of expression?))]
   [set!-exp
     (id symbol?)
-    (body expression?)])
-
-;;; Datatype for procedures
-(define-datatype proc-val proc-val?
-  [prim-proc
-   (name symbol?)]
-  [closure
-	(ids (list-of symbol?))
-	(bodies (list-of expression?))
-	(env  environment?)])
-	 
+    (body expression?)])	 
 	
 ;;; Environment type definitions
 (define-datatype environment environment?
@@ -83,6 +73,15 @@
    (syms (list-of symbol?))
    (vals (list-of scheme-value?))
    (env environment?)))
-   
+ 
+;;; Datatype for procedures
+(define-datatype proc-val proc-val?
+  [prim-proc
+   (name symbol?)]
+  [closure
+	(ids (list-of symbol?))
+	(bodies (list-of expression?))
+	(env  environment?)]) 
+ 
 (define scheme-value?
   (lambda (x) #t))
