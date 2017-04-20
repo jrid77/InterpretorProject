@@ -1,6 +1,6 @@
 ;;; Loads all files associated with the interpreter project              
 ;; Created by Claude Anderson
-;; Modified by Christopher Keinsley and 
+;; Modified by Christopher Keinsley and Jarrett Alexander
 
 (load "chez-init.ss") 
 
