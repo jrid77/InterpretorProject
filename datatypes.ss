@@ -15,7 +15,8 @@
       (null? exp)
       (vector? exp)
       (char? exp)
-      (list? exp))))
+      (list? exp)
+      (symbol? exp))))
 
 (define-datatype expression expression?
   [var-exp

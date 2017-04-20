@@ -25,23 +25,32 @@
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id) ;look up its value.
-		(apply-env env 
-		           id 
-      	           identity-proc ; procedure to call if id is in the environment
-				   (lambda () ; procedure to call if id not in env
-					  (apply-env global-env
-					             id
-								 identity-proc
-								(lambda () (eopl:error 'apply-env 
-									"variable not found in environment: ~s"
-									id)))))]
-	  [let-exp (declaration body)
-		(eval-bodies body
+    		(apply-env env 
+    		           id 
+          	           identity-proc ; procedure to call if id is in the environment
+    				   (lambda () ; procedure to call if id not in env
+    					  (apply-env global-env
+    					             id
+    								 identity-proc
+    								(lambda () (eopl:error 'apply-env 
+    									"variable not found in environment: ~s"
+    									id)))))]
+	    [let-exp (declaration body)
+		    (eval-bodies body
 					 (extend-env (map unparse-exp (map extract-let-vars declaration)) (eval-rands (map extract-let-bindings declaration) env) env))]
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator env)]
               [args (eval-rands rands env)])
           (apply-proc proc-value args))]
+      [if-else-exp (con then els)
+        (if (eval-exp con env)
+          (eval-exp then env)
+          (eval-exp els env))]
+      [lambda-exp (declaration body) 
+        (closure 
+          (map unparse-exp declaration)
+          body
+          env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 
@@ -90,7 +99,7 @@
                     proc-value)])))
 
 ;; Establishing which primitives we support
-(define *prim-proc-names* '(+ - * / add1 sub1 cons = < > <= >=
+(define *prim-proc-names* '(+ - * / add1 sub1 cons = < > <= >= not
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
   list null? assq eq? equal? atom? length list->vector list? pair? procedure?
   vector->list vector make-vector vector-ref vector? number? symbol? zero?
@@ -145,7 +154,7 @@
       [(list->vector) (list->vector (1st args))]
       [(list?) (list? (1st args))]
       [(pair?) (pair? (1st args))]
-      [(procedure?) (procedure? (1st args))]
+      [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (apply vector args)]
       [(make-vector) (if (null? (cdr args)) (make-vector (1st args)) (make-vector (1st args) (2nd args)))]
