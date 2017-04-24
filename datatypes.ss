@@ -62,7 +62,8 @@
     (body (list-of expression?))]
   [set!-exp
     (id symbol?)
-    (body expression?)])	 
+    (body expression?)]
+  )	 
 	
 ;;; Environment type definitions
 (define-datatype environment environment?
