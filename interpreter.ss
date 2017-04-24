@@ -46,9 +46,13 @@
         (if (eval-exp con env)
           (eval-exp then env)
           (eval-exp els env))]
+      [if-exp (con then)
+        (if (eval-exp con env)
+          (eval-exp then env)
+          (void))]
       [lambda-exp (declaration body) 
         (closure 
-          (map unparse-exp declaration)
+          declaration
           body
           env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
@@ -87,13 +91,30 @@
 				
 ;;; Apply a procedure to its arguments.
 ;;  TODO: User-defined procedures
+(define flatten
+  (lambda (ls)
+    (cond 
+      [(null? ls) '()]
+      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
+      [else (list ls)])))
+
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-	  [closure (ids bodies env)
-		(eval-bodies bodies
-					 (extend-env ids args env))]
+	    [closure (ids bodies env) 
+		    (eval-bodies bodies
+           ; (display proc-value)
+           (cond [(list? ids) (extend-env ids args env)]
+                 [(symbol? ids) (extend-env (list ids) (list args) env)]
+                 [else 
+                    (let ([idslist (flatten ids)])
+                       (letrec ([helper 
+                         (lambda (args ls)
+                            (if (null? (cdr ls))
+                                (list args)
+                                (cons (1st args) (helper (cdr args) (cdr ls)))))])
+                          (extend-env idslist (helper args idslist) env)))]))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -103,7 +124,7 @@
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
   list null? assq eq? equal? atom? length list->vector list? pair? procedure?
   vector->list vector make-vector vector-ref vector? number? symbol? zero?
-  set-car! set-cdr! vector-set! display newline))
+  set-car! set-cdr! vector-set! display newline map apply))
 
 ;; Initializes a global environment with only primitives
 (define global-env
@@ -167,6 +188,14 @@
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
       [(display) (if (null? (cdr args)) (display (1st args)) (display (1st args) (2nd args)))]
       [(newline) (if (null? args) (newline) (newline (1st args)))]
+      [(map) 
+          (letrec 
+            [(helper (lambda (ls)
+                      (if (null? ls)
+                         '()
+                          (cons (apply-proc (1st args) (list (1st ls))) (helper (cdr ls))))))]
+            (helper (2nd args)))]
+      [(apply) (apply-proc (1st args) (2nd args))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))

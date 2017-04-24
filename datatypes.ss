@@ -18,24 +18,22 @@
       (list? exp)
       (symbol? exp))))
 
+(define ilos?
+  (lambda (ls)
+    (cond [(null? ls) #f]
+          [(not (pair? (cdr ls))) (and (symbol? (cdr ls)) (symbol? (car ls)))]
+          [else 
+            (and (symbol? (car ls))
+                  (ilos? (cdr ls)))])))
+
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
   [lit-exp
     (id lit?)]
   [lambda-exp
-    (declaration (lambda (x) (or (list-of expression?) (symbol? x))))
+    (declaration (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
     (body (list-of expression?))]
-  ; [lambda-var-exp
-  ;   (body (lambda (x)
-  ;       (cond
-  ;         [(symbol? x) #t]
-  ;         [(list? x)
-  ;           (let recursive-helper ([rest x])
-  ;             (if (or (null? rest) (symbol? rest))
-  ;               #t
-  ;               (and (symbol? (car rest)) (recursive-helper (cdr rest)))))]
-  ;         [else #f])))]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))]
@@ -79,7 +77,7 @@
   [prim-proc
    (name symbol?)]
   [closure
-	(ids (list-of symbol?))
+	(ids (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
 	(bodies (list-of expression?))
 	(env  environment?)]) 
  

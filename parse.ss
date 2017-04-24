@@ -9,6 +9,7 @@
 (define 4th cadddr)
 
 
+
 (define parse-exp         
   (lambda (datum)
     (cond
@@ -17,13 +18,16 @@
      [(list? datum)
       (cond ; Everthing in here is a list of expressions. Where the bulk is.
         [(equal? (car datum) 'lambda) ; lambda-exp
-          (if (< (length datum) 3)
-            (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Length" datum)
-          (if (and (list? (2nd datum)) (andmap symbol? (2nd datum)))
-            (lambda-exp (map parse-exp (2nd datum)) (map parse-exp (cddr datum)))
-            (if (symbol? (2nd datum))
-              (lambda-exp (2nd datum) (map parse-exp (cddr datum)))
-              (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum))))]
+          (cond 
+              [(< (length datum) 3) (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Length" datum)]
+              [(and (list? (2nd datum)) (andmap symbol? (2nd datum)))
+                  (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+              [(symbol? (2nd datum))
+                  (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+              [(and (pair? (2nd datum)) (ilos? (2nd datum)))
+                  (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+              [else (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum)]
+            )]
         [(equal? (car datum) 'if) ; if exp
           (cond 
             [(= 3 (length datum))
@@ -93,12 +97,8 @@
         (append 
           (list 
             'lambda 
-            (if (list? declaration)
-              (map unparse-exp declaration)
-              declaration))
-          (map unparse-exp body))]
-;     [lambda-var-exp (body) (append (list 'lambda) (map unparse-exp exp))]
-       ;   (list (unparse-exp els)))]
+            declaration
+           (map unparse-exp body)))]
       [if-exp (con then)
         (append
           (list 'if (unparse-exp con))
