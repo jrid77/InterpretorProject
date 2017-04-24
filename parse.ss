@@ -56,6 +56,8 @@
               (set!-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))
               (eopl:error 'parse-exp "Set! Expression: ~s Incorrect Argument Type" datum))
             (eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
+        [(equal? (1st datum) 'begin)
+          (begin-exp (map parse-exp (cdr datum)))]
         [else (app-exp (parse-exp (1st datum))
            (map parse-exp (cdr datum)))])]
        [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -126,6 +128,7 @@
       [set!-exp (id body)
         (list 'set! id (map unparse-exp body))]
       [app-exp (rator rands) (cons (unparse-exp rator) (map unparse-exp rands))]
+      [begin-exp (bodies) (append (list 'begin) (map unparse-exp bodies))]
       )))
 
 

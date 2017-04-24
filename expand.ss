@@ -2,10 +2,13 @@
 	(lambda (exp)
 		(cases expression exp
 			[let-exp (declaration body) 
-					(app-exp 
-						(lambda-exp 
-							(map unparse-exp (map extract-let-vars declaration)) body) 
-						(map extract-let-bindings declaration))]
+				(app-exp 
+					(lambda-exp
+						(map unparse-exp (map extract-let-vars declaration)) body) 
+					(map syntax-expand (map extract-let-bindings declaration)))]
+			[begin-exp (bodies)
+				(syntax-expand 
+					(let-exp '() bodies))]
 			[else exp])))
 
 (define extract-let-vars

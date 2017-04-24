@@ -55,6 +55,10 @@
   [set!-exp
     (id symbol?)
     (body expression?)]
+  [begin-exp
+    (bodies (list-of expression?))]
+  [cond-exp
+    (tests)]
   )	 
 	
 ;;; Environment type definitions
