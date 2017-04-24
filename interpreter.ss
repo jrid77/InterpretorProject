@@ -88,16 +88,9 @@
 			(begin
 				(eval-exp (car bodies) env)
 				(eval-bodies (cdr bodies) env)))))
-				
+
 ;;; Apply a procedure to its arguments.
 ;;  TODO: User-defined procedures
-(define flatten
-  (lambda (ls)
-    (cond 
-      [(null? ls) '()]
-      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
-      [else (list ls)])))
-
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
@@ -118,7 +111,14 @@
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
-
+				
+(define flatten
+  (lambda (ls)
+    (cond 
+      [(null? ls) '()]
+      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
+      [else (list ls)])))					
+					
 ;; Establishing which primitives we support
 (define *prim-proc-names* '(+ - * / add1 sub1 cons = < > <= >= not
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 

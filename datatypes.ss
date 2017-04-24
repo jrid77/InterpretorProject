@@ -1,11 +1,3 @@
-
-
-;   [let-exp
-; 		(var (list-of symbol?))
-; 		(exps (list-of expression?))
-; 		(bodies (list-of expression?))]
-
-
 (define lit?
   (lambda (exp)
     (or 
