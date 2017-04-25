@@ -57,9 +57,6 @@
     (body expression?)]
   [begin-exp
     (bodies (list-of expression?))]
-  [cond-exp
-    (tests (list-of expression?))
-    (bodies (list-of expression?))]
   )	 
 	
 ;;; Environment type definitions

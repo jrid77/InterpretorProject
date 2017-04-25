@@ -9,12 +9,8 @@
 			[begin-exp (bodies)
 				(syntax-expand 
 					(let-exp '() bodies))]
-			[cond-exp (tests bodies)
-				(letrec 
-					[(helper)
-						;; Need to iterate over each list and make if-exp
-						;; Base case is else or null. Treat each differently
-						]
+			[app-exp (rator rands)
+				(if (equal? (unparse-exp rator) 'cond)
 					)]
 			[else exp])))
 

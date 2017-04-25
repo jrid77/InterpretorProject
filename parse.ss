@@ -58,13 +58,6 @@
             (eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
         [(equal? (1st datum) 'begin)
           (begin-exp (map parse-exp (cdr datum)))]
-        [(equal? (1st datum) 'cond)
-          (if (= 1 (length datum))
-            (eopl:error 'parse-exp "Cond Expression: ~s Incorrect Number of Arguments" datum)
-            (let [(potabs (car (group-by-two (cdr datum))))]
-              (cond-exp 
-                (map parse-exp (map car potabs)) 
-                (map parse-exp (map cadr potabs)))))]
         [else (app-exp (parse-exp (1st datum))
            (map parse-exp (cdr datum)))])]
        [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -83,13 +76,6 @@
             (cons 
               (let-declaration-exp (parse-exp (caar rest)) (parse-exp (cadar rest)))
               (inner-helper (cdr rest))))))))
-
-(define group-by-two
-  (lambda (ls)
-    (cond 
-      [(null? ls) '()]
-      [(null? (cdr ls)) (list (list (car ls)))]
-      [else (cons (list (car ls) (cadr ls)) (group-by-two (cddr ls)))])))
 			  
 (define literal?
   (lambda (exp)
