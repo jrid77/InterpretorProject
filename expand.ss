@@ -60,22 +60,6 @@
 														(helper (cdr ls))
 														)))])
 								(helper rands))))]
-					[(equal? (unparse-exp rator) 'case)
-						(let-exp
-							(list (let-declaration-exp
-								(var-exp 'val)
-								(car rands)))
-							(list (syntax-expand (app-exp
-											(var-exp 'cond)
-											(map (lambda (v)
-												(if (equal? (car v) 'else)
-													(app-exp (var-exp 'else) (list (parse-exp (cadr v))))
-													(let ([to-parse (list (list 'member 'val (quasiquote (quote ,(car v))) (car (cdr v))))])
-														(newline)
-														(display to-parse)
-														(newline)
-														(parse-exp to-parse)))) ;TODO: CLEAN
-												(map unparse-exp (cdr rands)))))))]
 					[else (app-exp
 							(syntax-expand rator)
 							(map syntax-expand rands))]
@@ -89,6 +73,15 @@
 					(syntax-expand con)
 					(syntax-expand then)
 					(syntax-expand els))]
+			[case-exp (id keys bodies)
+		     (if (null? keys)
+			 (syntax-expand (1st bodies))
+			 (if-else-exp
+			  (app-exp
+			   (var-exp 'member)
+			   (list id (lit-exp (map unparse-exp (1st keys)))))
+			  (syntax-expand (1st bodies))
+				(syntax-expand (case-exp id (cdr keys) (cdr bodies)))))]
 			[else exp])))
 
 (define extract-let-vars

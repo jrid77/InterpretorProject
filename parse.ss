@@ -60,6 +60,16 @@
             (eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
         [(equal? (1st datum) 'begin)
           (begin-exp (map parse-exp (cdr datum)))]
+		[(eqv? (car datum) 'case)
+		  (case-exp (parse-exp (2nd datum))
+		    (map (lambda (x)
+			   (map parse-exp (1st x)))
+			 (filter (lambda (x)
+				   (not (eqv? 'else (1st x))))
+				 (cddr datum)))
+		    (map (lambda (x)
+			   (parse-exp (2nd x)))
+			 (cddr datum)))]
         [else (app-exp (parse-exp (1st datum))
            (map parse-exp (cdr datum)))])]
        [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -134,6 +144,12 @@
       [begin-exp (bodies) (append (list 'begin) (map unparse-exp bodies))]
       [while-exp (test bodies)
         (cons* 'while (unparse-exp test) (map unparse-exp bodies))]
+	  [case-exp (id keys bodies)
+		(cons 'case 
+		      (cons (map unparse-exp id)
+			    (append (map list 
+					 (append (map unparse-exp preds) (list 'else))
+					 (map unparse-exp bodies)))))]
       )))
 
 

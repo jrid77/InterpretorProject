@@ -60,7 +60,18 @@
   [while-exp
     (test expression?)
     (bodies (list-of expression?))]
-  )	 
+  [case-exp
+   (id expression?)
+   (keys (list-of (list-of literal-exp?)))
+   (bodies (list-of expression?))]
+  )	
+  
+ (define literal-exp?
+  (lambda (obj)
+    (and (list? obj)
+	 (eqv? (car obj) 'lit-exp)
+	 (literal? (cadr obj))
+	 (null? (cddr obj)))))
 	
 ;;; Environment type definitions
 (define-datatype environment environment?
