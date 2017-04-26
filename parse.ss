@@ -11,77 +11,64 @@
      [(symbol? datum) (var-exp datum)]
      [(literal? datum) (if (list? datum) (lit-exp (2nd datum)) (lit-exp datum))]
      [(list? datum)
-      (cond
-       ;;Lambda
-       [(equal? (car datum) 'lambda) 
-		(cond [(< (length datum) 3) (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Length" datum)]
-			  [(and (list? (2nd datum)) (andmap symbol? (2nd datum)))
-			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
-			  [(symbol? (2nd datum))
-			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
-			  [(and (pair? (2nd datum)) (ilos? (2nd datum)))
-			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
-			  [else (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum)])]
-       ;;While
-       [(equal? (car datum) 'while)
-		(while-exp (syntax-expand (parse-exp (2nd datum))) (map syntax-expand (map parse-exp (cddr datum))))]
-       ;;If
-       [(equal? (car datum) 'if) 
-		(cond [(= 3 (length datum))
-			   (if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))]
-			  [(= 4 (length datum))
-			   (if-else-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) (parse-exp (4th datum)))]
-			  [else 
-			   (eopl:error 'parse-exp "If Expression: ~s Incorrect Length" datum)])]
-       ;;Let
-       [(equal? (car datum) 'let)
+      (case (1st datum)
+	['lambda 
+	    (cond [(< (length datum) 3) (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Length" datum)]
+		  [(and (list? (2nd datum)) (andmap symbol? (2nd datum)))
+		   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+		  [(symbol? (2nd datum))
+		   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+		  [(and (pair? (2nd datum)) (ilos? (2nd datum)))
+		   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+		  [else (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum)])]
+	['while
+	 (while-exp (syntax-expand (parse-exp (2nd datum))) (map syntax-expand (map parse-exp (cddr datum))))]
+	['if 
+	 (cond [(= 3 (length datum))
+		(if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))]
+	       [(= 4 (length datum))
+		(if-else-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) (parse-exp (4th datum)))]
+	       [else 
+		(eopl:error 'parse-exp "If Expression: ~s Incorrect Length" datum)])]
+	['let
+	    (if (symbol? (2nd datum))
+		(if (< (length datum) 4)
+		    (eopl:error 'parse-exp "Named Let: ~s Incorrect Length" datum)
+		    (named-let-exp (var-exp (2nd datum)) (let-parse-helper (3rd datum)) (map parse-exp (cdddr datum))))
+		(if (< (length datum) 3)
+		    (eopl:error 'parse-exp "Let Expression: ~s Incorrect Length" datum)
+		    (let-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum)))))]
+	['letrec
+	    (if (< (length datum) 3)
+		(eopl:error 'parse-exp "Letrec Expression: ~s Incorrect Length" datum)
+		(letrec-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
+	['let*
+	    (if (< (length datum) 3)
+		(eopl:error 'parse-exp "Let* Expression: ~s Incorrect Length" datum)
+		(let*-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
+	['set!
+	    (if (= 3 (length datum))
 		(if (symbol? (2nd datum))
-			(if (< (length datum) 4)
-			(eopl:error 'parse-exp "Named Let: ~s Incorrect Length" datum)
-			(named-let-exp (var-exp (2nd datum)) (let-parse-helper (3rd datum)) (map parse-exp (cdddr datum))))
-			(if (< (length datum) 3)
-			(eopl:error 'parse-exp "Let Expression: ~s Incorrect Length" datum)
-			(let-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum)))))]
-	   ;;Letrec
-       [(equal? (car datum) 'letrec)
-		(if (< (length datum) 3)
-				(eopl:error 'parse-exp "Letrec Expression: ~s Incorrect Length" datum)
-			(letrec-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
-       ;;Let*
-       [(equal? (car datum) 'let*)
-		(if (< (length datum) 3)
-				(eopl:error 'parse-exp "Let* Expression: ~s Incorrect Length" datum)
-				(let*-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
-       ;;Set!
-       [(equal? (1st datum) 'set!)
-		(if (= 3 (length datum))
-				(if (symbol? (2nd datum))
-			(set!-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))
-			(eopl:error 'parse-exp "Set! Expression: ~s Incorrect Argument Type" datum))
-				(eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
-       ;;Begin
-       [(equal? (1st datum) 'begin)
-		(begin-exp (map parse-exp (cdr datum)))]
-       ;;Case
-       [(eqv? (car datum) 'case)
-		(case-exp (parse-exp (2nd datum))
-			  (map (lambda (x) (map parse-exp (1st x)))
-				   (filter (lambda (x) (not (eqv? 'else (1st x)))) (cddr datum)))
-			  (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))]
-       ;;And
-       [(eqv? (car datum) 'and)
-		(and-exp (map parse-exp (cdr datum)))]
-       ;;Or
-       [(eqv? (car datum) 'or)
-		(or-exp (map parse-exp (cdr datum)))]
-       ;;Cond
-       [(eqv? (car datum) 'cond)
-		(cond-exp (map (lambda (x) (parse-exp (1st x)))
-				   (filter (lambda (x) (not (eqv? 'else (1st x)))) (cdr datum)))
-			  (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))]
-       ;;Applications
-       [else (app-exp (parse-exp (1st datum))
-		      (map parse-exp (cdr datum)))])]
+		    (set!-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))
+		    (eopl:error 'parse-exp "Set! Expression: ~s Incorrect Argument Type" datum))
+		(eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
+	['begin
+	  (begin-exp (map parse-exp (cdr datum)))]
+	['case
+	    (case-exp (parse-exp (2nd datum))
+		      (map (lambda (x) (map parse-exp (1st x)))
+			   (filter (lambda (x) (not (eqv? 'else (1st x)))) (cddr datum)))
+		      (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))]
+	['and
+	 (and-exp (map parse-exp (cdr datum)))]
+	['or
+	 (or-exp (map parse-exp (cdr datum)))]
+	['cond
+	 (cond-exp (map (lambda (x) (parse-exp (1st x)))
+			(filter (lambda (x) (not (eqv? 'else (1st x)))) (cdr datum)))
+		   (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))]
+	[else (app-exp (parse-exp (1st datum))
+		       (map parse-exp (cdr datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
 (define let-parse-helper
