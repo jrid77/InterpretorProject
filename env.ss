@@ -1,4 +1,4 @@
-; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
+ ;;; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
 (define empty-env
   (lambda ()
     (empty-env-record)))
@@ -10,13 +10,12 @@
 (define apply-env
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
-      (empty-env-record ()
-        (fail))
-      (extended-env-record (syms vals env)
-	(let ((pos (list-find-position sym syms)))
-      	  (if (number? pos)
-	      (succeed (list-ref vals pos))
-	      (apply-env env sym succeed fail)))))))
+	   (empty-env-record () (fail))
+	   (extended-env-record (syms vals env)
+				(let ((pos (list-find-position sym syms)))
+				  (if (number? pos)
+				      (succeed (list-ref vals pos))
+				      (apply-env env sym succeed fail)))))))
 
 (define list-find-position
   (lambda (sym los)
