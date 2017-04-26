@@ -26,6 +26,8 @@
                   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
               [else (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum)]
             )]
+        [(equal? (car datum) 'while)
+          (while-exp (syntax-expand (parse-exp (2nd datum))) (map syntax-expand (map parse-exp (cddr datum))))]
         [(equal? (car datum) 'if) ; if exp
           (cond 
             [(= 3 (length datum))
@@ -130,6 +132,8 @@
         (list 'set! id (map unparse-exp body))]
       [app-exp (rator rands) (cons (unparse-exp rator) (map unparse-exp rands))]
       [begin-exp (bodies) (append (list 'begin) (map unparse-exp bodies))]
+      [while-exp (test bodies)
+        (cons* 'while (unparse-exp test) (map unparse-exp bodies))]
       )))
 
 

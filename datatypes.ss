@@ -57,6 +57,9 @@
     (body expression?)]
   [begin-exp
     (bodies (list-of expression?))]
+  [while-exp
+    (test expression?)
+    (bodies (list-of expression?))]
   )	 
 	
 ;;; Environment type definitions

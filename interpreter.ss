@@ -55,6 +55,9 @@
           declaration
           body
           env)]
+      [while-exp (test bodies)
+        (if (eval-exp test env)
+          (eval-bodies (append bodies (list exp)) env))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 
@@ -124,7 +127,7 @@
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
   list null? assq eq? equal? atom? length list->vector list? pair? procedure?
   vector->list vector make-vector vector-ref vector? number? symbol? zero?
-  set-car! set-cdr! vector-set! display newline map apply member))
+  set-car! set-cdr! vector-set! display newline map apply member quotient))
 
 ;; Initializes a global environment with only primitives
 (define global-env
@@ -189,6 +192,7 @@
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
       [(display) (if (null? (cdr args)) (display (1st args)) (display (1st args) (2nd args)))]
       [(newline) (if (null? args) (newline) (newline (1st args)))]
+      [(quotient) (apply quotient args)]
       [(map) 
           (letrec 
             [(helper (lambda (ls)
