@@ -61,21 +61,6 @@
 			    (eval-bodies (append bodies (list exp)) env))]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
-;;; Pulling vars out of let-exp
-(define extract-let-vars
-  (lambda (x)
-    (cases expression x
-	   [let-declaration-exp (var binding) var]
-	   [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
-
-;;; Pulling bindings out of let-exp
-(define extract-let-bindings
-  (lambda (x)
-    (cases expression x
-	   [let-declaration-exp (var binding) binding]
-	   [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
-
-
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env)

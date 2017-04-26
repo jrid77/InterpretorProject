@@ -11,8 +11,7 @@
     (load "parse.ss")
     (load "env.ss")
     (load "expand.ss")
-    (load "interpreter.ss")
-    ))
+    (load "interpreter.ss")))
 
 (load-all)
 
