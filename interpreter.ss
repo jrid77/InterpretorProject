@@ -2,11 +2,10 @@
 (define rep      
   (lambda ()
     (display "--> ")
-    ;; notice that we don't save changes to the environment...
     (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
-      ;; TODO: when creating closures, display nothing
+      ;; TODO: when creating closures, display nothing also figure out this void thing
       (eopl:pretty-print answer) (newline)
-      (rep))))  ; tail-recursive, so stack doesn't grow.
+      (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
 (define eval-one-exp
@@ -20,121 +19,121 @@
 
 ;;; Main component of the interpreter
 (define eval-exp
- (let ([identity-proc (lambda (x) x)])
-  (lambda (exp env)
-    (cases expression exp
-      [lit-exp (datum) datum]
-      [var-exp (id) ;look up its value.
-    		(apply-env env 
-    		           id 
-          	           identity-proc ; procedure to call if id is in the environment
-    				   (lambda () ; procedure to call if id not in env
-    					  (apply-env global-env
-    					             id
-    								 identity-proc
-    								(lambda () (eopl:error 'apply-env 
-    									"variable not found in environment: ~s"
-    									id)))))]
-	    [let-exp (declaration body)
-		    (eval-bodies body
-					 (extend-env (map unparse-exp (map extract-let-vars declaration)) (eval-rands (map extract-let-bindings declaration) env) env))]
-      [app-exp (rator rands)
-        (let ([proc-value (eval-exp rator env)]
-              [args (eval-rands rands env)])
-          (apply-proc proc-value args))]
-      [if-else-exp (con then els)
-        (if (eval-exp con env)
-          (eval-exp then env)
-          (eval-exp els env))]
-      [if-exp (con then)
-        (if (eval-exp con env)
-          (eval-exp then env)
-          (void))]
-      [lambda-exp (declaration body) 
-        (closure 
-          declaration
-          body
-          env)]
-      [while-exp (test bodies)
-        (if (eval-exp test env)
-          (eval-bodies (append bodies (list exp)) env))]
-      [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
-
+  (let ([identity-proc (lambda (x) x)])
+    (lambda (exp env)
+      (cases expression exp
+	     [lit-exp (datum) datum]
+	     [var-exp (id) ;look up its value.
+		      (apply-env env 
+				 id 
+				 identity-proc ; procedure to call if id is in the environment
+				 (lambda () ; procedure to call if id not in env
+				   (apply-env global-env
+					      id
+					      identity-proc
+					      (lambda () (eopl:error 'apply-env 
+								     "variable not found in environment: ~s"
+								     id)))))]
+	     [let-exp (declaration body)
+		      (eval-bodies body
+				   (extend-env (map unparse-exp (map extract-let-vars declaration))
+					       (eval-rands (map extract-let-bindings declaration) env)
+					       env))]
+	     [app-exp (rator rands)
+		      (let ([proc-value (eval-exp rator env)]
+			    [args (eval-rands rands env)])
+			(apply-proc proc-value args))]
+	     [if-else-exp (con then els)
+			  (if (eval-exp con env)
+			      (eval-exp then env)
+			      (eval-exp els env))]
+	     [if-exp (con then)
+		     (if (eval-exp con env)
+			 (eval-exp then env)
+			 (void))]
+	     [lambda-exp (declaration body) 
+			 (closure 
+			  declaration
+			  body
+			  env)]
+	     [while-exp (test bodies)
+			(if (eval-exp test env)
+			    (eval-bodies (append bodies (list exp)) env))]
+	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ;;; Pulling vars out of let-exp
 (define extract-let-vars
   (lambda (x)
     (cases expression x
-      [let-declaration-exp (var binding) var]
-      [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
+	   [let-declaration-exp (var binding) var]
+	   [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
 
 ;;; Pulling bindings out of let-exp
 (define extract-let-bindings
   (lambda (x)
     (cases expression x
-      [let-declaration-exp (var binding) binding]
-      [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
+	   [let-declaration-exp (var binding) binding]
+	   [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
 
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env)
-	(map (lambda (e)
-			(eval-exp e env))
-			rands)))
-	
+    (map (lambda (e) (eval-exp e env)) rands)))
+
 ;;; Evaluate the bodies returning the value of the last
 (define eval-bodies
-	(lambda (bodies env)
-		(if (null? (cdr bodies))
-			(eval-exp (car bodies) env)
-			(begin
-				(eval-exp (car bodies) env)
-				(eval-bodies (cdr bodies) env)))))
+  (lambda (bodies env)
+    (if (null? (cdr bodies))
+	(eval-exp (car bodies) env)
+	(begin
+	  (eval-exp (car bodies) env)
+	  (eval-bodies (cdr bodies) env)))))
 
 ;;; Apply a procedure to its arguments.
 ;;  TODO: User-defined procedures
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args)]
-	    [closure (ids bodies env) 
-		    (eval-bodies bodies
-           ; (display proc-value)
-           (cond [(list? ids) (extend-env ids args env)]
-                 [(symbol? ids) (extend-env (list ids) (list args) env)]
-                 [else 
-                    (let ([idslist (flatten ids)])
-                       (letrec ([helper 
-                         (lambda (args ls)
-                            (if (null? (cdr ls))
-                                (list args)
-                                (cons (1st args) (helper (cdr args) (cdr ls)))))])
-                          (extend-env idslist (helper args idslist) env)))]))]
-      [else (error 'apply-proc
-                   "Attempt to apply bad procedure: ~s" 
-                    proc-value)])))
-				
+	   [prim-proc (op) (apply-prim-proc op args)]
+	   [closure (ids bodies env) 
+		    (eval-bodies
+		     bodies
+		     (cond [(list? ids) (extend-env ids args env)]
+				   [(symbol? ids) (extend-env (list ids) (list args) env)]
+				   [else 
+					(let ([idslist (flatten ids)])
+					  (letrec ([helper 
+						(lambda (args ls)
+						  (if (null? (cdr ls))
+							  (list args)
+							  (cons (1st args) (helper (cdr args) (cdr ls)))))])
+					   (extend-env idslist (helper args idslist) env)))]))]
+	   [else (error 'apply-proc
+			"Attempt to apply bad procedure: ~s" 
+			proc-value)])))
+
 (define flatten
   (lambda (ls)
     (cond 
-      [(null? ls) '()]
-      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
-      [else (list ls)])))					
+     [(null? ls) '()]
+     [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
+     [else (list ls)])))					
 					
 ;; Establishing which primitives we support
-(define *prim-proc-names* '(+ - * / add1 sub1 cons = < > <= >= not
-  car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
-  list null? assq eq? equal? atom? length list->vector list? pair? procedure?
-  vector->list vector make-vector vector-ref vector? number? symbol? zero?
-  set-car! set-cdr! vector-set! display newline map apply member quotient void))
+(define *prim-proc-names*
+  '(+ - * / add1 sub1 cons = < > <= >= not
+      car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
+      list null? assq eq? equal? atom? length list->vector list? pair? procedure?
+      vector->list vector make-vector vector-ref vector? number? symbol? zero?
+      set-car! set-cdr! vector-set! display newline map apply member quotient void))
 
 ;; Initializes a global environment with only primitives
 (define global-env
   (extend-env            
-     *prim-proc-names*   
-     (map prim-proc *prim-proc-names*)
-     (empty-env)))
+   *prim-proc-names*   
+   (map prim-proc *prim-proc-names*)
+   (empty-env)))
 
 ;;; Cases out our primitive procedures
 (define apply-prim-proc
@@ -170,7 +169,7 @@
       [(cdddr) (cdddr (1st args))]
       [(list) args]
       [(null?) (null? (1st args))]
-	  [(void) (void)]
+      [(void) (void)]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
       [(equal?) (equal? (1st args) (2nd args))]
@@ -194,14 +193,14 @@
       [(display) (if (null? (cdr args)) (display (1st args)) (display (1st args) (2nd args)))]
       [(newline) (if (null? args) (newline) (newline (1st args)))]
       [(quotient) (apply quotient args)]
-      [(map) 
-          (letrec 
-            [(helper (lambda (ls)
-                      (if (null? ls)
-                         '()
-                          (cons (apply-proc (1st args) (list (1st ls))) (helper (cdr ls))))))]
-            (helper (2nd args)))]
+      [(map) (letrec 
+				 [(helper (lambda (ls)
+						(if (null? ls)
+						'()
+						(cons (apply-proc (1st args) (list (1st ls)))
+							  (helper (cdr ls))))))]
+				   (helper (2nd args)))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [else (error 'apply-prim-proc 
-            "Bad primitive procedure name: ~s" 
-            prim-op)])))
+		   "Bad primitive procedure name: ~s" 
+		   prim-op)])))
