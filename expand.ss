@@ -6,8 +6,15 @@
 					(lambda-exp
 						(map unparse-exp (map extract-let-vars declaration)) (map syntax-expand body)) 
 					(map syntax-expand (map extract-let-bindings declaration)))]
-			[let*-exp (declaration body)
-				(syntax-expand (parse-exp (let*->let (unparse-exp exp))))]
+			[let*-exp (declarations bodies)
+				(syntax-expand 
+					(letrec ([helper (lambda (decs)
+										(if (null? decs)
+											(let-exp '() bodies)
+											(let-exp 
+												(list (car decs))
+												(list (helper (cdr decs))))))])
+						(helper declarations)))]
 			[begin-exp (bodies)
 				(syntax-expand 
 					(let-exp '() bodies))]
@@ -71,8 +78,8 @@
 			[if-else-exp (con then els)
 				(if-else-exp
 					(syntax-expand con)
-					(syntax-expand then)
-					(syntax-expand els))]
+					then
+					els)]
 			[case-exp (id keys bodies)
 		     (if (null? keys)
 			 (syntax-expand (1st bodies))
