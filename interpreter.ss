@@ -127,7 +127,7 @@
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
   list null? assq eq? equal? atom? length list->vector list? pair? procedure?
   vector->list vector make-vector vector-ref vector? number? symbol? zero?
-  set-car! set-cdr! vector-set! display newline map apply member quotient))
+  set-car! set-cdr! vector-set! display newline map apply member quotient void))
 
 ;; Initializes a global environment with only primitives
 (define global-env
@@ -170,6 +170,7 @@
       [(cdddr) (cdddr (1st args))]
       [(list) args]
       [(null?) (null? (1st args))]
+	  [(void) (void)]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
       [(equal?) (equal? (1st args) (2nd args))]

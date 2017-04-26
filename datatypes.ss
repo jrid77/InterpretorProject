@@ -64,6 +64,9 @@
   [while-exp
     (test expression?)
     (bodies (list-of expression?))]
+  [cond-exp
+    (tests (list-of expression?))
+	(bodies (list-of expression?))]
   [case-exp
    (id expression?)
    (keys (list-of (list-of lit-exp?)))

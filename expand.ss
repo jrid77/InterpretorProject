@@ -18,28 +18,6 @@
 			[begin-exp (bodies)
 				(syntax-expand 
 					(let-exp '() bodies))]
-			[app-exp (rator rands)
-				(cond 
-					[(equal? (unparse-exp rator) 'cond)
-						(let ([rands (map unparse-exp rands)])
-							(letrec ([helper 
-										(lambda (ls)
-											(cond
-												[(equal? (caar ls) 'else) (parse-exp (cadar ls))]												
-												[(null? (cdr ls)) (if-exp 
-																	(syntax-expand (parse-exp (caar ls)))
-																	(syntax-expand (parse-exp (cadar ls))))]											
-												[else
-													(if-else-exp 
-														(syntax-expand (parse-exp (caar ls)))
-														(syntax-expand (parse-exp (cadar ls)))
-														(helper (cdr ls)))]))])
-							(helper rands))
-						)]
-					[else (app-exp
-							(syntax-expand rator)
-							(map syntax-expand rands))]
-			)]
 			[if-exp (con then) 
 				(if-exp 
 					(syntax-expand con) 
@@ -49,6 +27,15 @@
 					(syntax-expand con)
 					then
 					els)]
+		    [cond-exp (preds bodies)
+		     (if (null? preds)
+				 (if (null? bodies)
+					 (app-exp (var-exp 'void) '())
+					 (syntax-expand (car bodies)))
+				 (if-else-exp 
+				        (syntax-expand (car preds))
+						(syntax-expand (car bodies))
+						(syntax-expand (cond-exp (cdr preds) (cdr bodies)))))]
 			[and-exp (bodies)
 				(cond [(null? bodies)
 						(lit-exp #t)]
@@ -93,14 +80,3 @@
     (cases expression x
       [let-declaration-exp (var binding) binding]
       [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
-
-(define format-nested-lets
-	(lambda (exp og)
-		(if (null? (cdr exp))
-			(list 'let (list (car exp)) (caddr og))
-			(list 'let (list (car exp)) (format-nested-lets (cdr exp) og)))))
-
-(define let*->let
-	(lambda (exp)
-		(format-nested-lets (cadr exp) exp)))
-
