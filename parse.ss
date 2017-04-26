@@ -106,7 +106,8 @@
       [if-else-exp (con then els) 
         (append 
           (list 'if (unparse-exp con)) 
-          (list (unparse-exp then)))]
+          (list (unparse-exp then))
+          (list (unparse-exp els)))]
       [named-let-exp (name declaration body)
         (append
           (list 'let name (map unparse-exp declaration))
@@ -115,7 +116,7 @@
         (append 
           (list 'let (map unparse-exp declaration))
           (map unparse-exp body))]
-      [let-declaration-exp (var body)
+      [let-declaration-exp (var binding)
         (list (unparse-exp var) (unparse-exp binding))]
       [letrec-exp (declaration body)
         (append

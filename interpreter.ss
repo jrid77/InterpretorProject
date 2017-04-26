@@ -3,14 +3,14 @@
   (lambda ()
     (display "--> ")
     ;; notice that we don't save changes to the environment...
-    (let ([answer (top-level-eval (parse-exp (read)))])
+    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
       ;; TODO: when creating closures, display nothing
       (eopl:pretty-print answer) (newline)
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 ;;; Evaluates one expression in the global environment for the grading server
 (define eval-one-exp
-  (lambda (x) (top-level-eval (parse-exp x))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
 ;;; Evaluates a form in the global environment
 ;; later we may add things that are not expressions.
@@ -124,7 +124,7 @@
   car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
   list null? assq eq? equal? atom? length list->vector list? pair? procedure?
   vector->list vector make-vector vector-ref vector? number? symbol? zero?
-  set-car! set-cdr! vector-set! display newline map apply))
+  set-car! set-cdr! vector-set! display newline map apply member))
 
 ;; Initializes a global environment with only primitives
 (define global-env
@@ -183,6 +183,7 @@
       [(vector?) (vector? (1st args))]
       [(number?) (number? (1st args))]
       [(symbol?) (symbol? (1st args))]
+      [(member) (member (1st args) (2nd args))]
       [(set-car!) (set-car! (1st args) (2nd args))]
       [(set-cdr!) (set-cdr! (1st args) (2nd args))]
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
