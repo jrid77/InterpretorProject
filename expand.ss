@@ -36,37 +36,6 @@
 														(helper (cdr ls)))]))])
 							(helper rands))
 						)]
-					[(equal? (unparse-exp rator) 'and)
-						(let ([rands (map unparse-exp rands)])
-							(if (null? rands) (parse-exp #t)
-								(letrec ([helper 
-											(lambda (ls)
-												(if (null? (cdr ls))
-													(if-else-exp 
-														(syntax-expand (parse-exp (car ls)))
-														(syntax-expand (parse-exp (car ls)))
-														(parse-exp #f))
-													(if-else-exp
-														(syntax-expand (parse-exp (car ls)))
-														(helper (cdr ls))
-														(parse-exp #f))))])
-								(helper rands))))]
-					[(equal? (unparse-exp rator) 'or)
-						(let ([rands (map unparse-exp rands)])
-							(if (null? rands) (parse-exp #f)
-								(letrec ([helper 
-											(lambda (ls)
-												(if (null? (cdr ls))
-													(if-else-exp 
-														(syntax-expand (parse-exp (car ls)))
-														(syntax-expand (parse-exp (car ls)))											
-														(parse-exp #f))
-													(if-else-exp
-														(syntax-expand (parse-exp (car ls)))
-														(syntax-expand (parse-exp (car ls)))
-														(helper (cdr ls))
-														)))])
-								(helper rands))))]
 					[else (app-exp
 							(syntax-expand rator)
 							(map syntax-expand rands))]
@@ -80,6 +49,27 @@
 					(syntax-expand con)
 					then
 					els)]
+			[and-exp (bodies)
+				(cond [(null? bodies)
+						(lit-exp #t)]
+					  [(null? (cdr bodies))
+						(syntax-expand (car bodies))]
+					  [else
+						(if-else-exp
+							(syntax-expand (car bodies))
+							(syntax-expand (and-exp (cdr bodies)) 
+							(lit-exp #f)))])]
+		   [or-exp (bodies) 
+				(cond
+					[(null? bodies)
+					 (lit-exp #f)]
+					[(null? (cdr bodies))
+					 (syntax-expand (car bodies))]
+					[else
+					  (if-else-exp
+						 (syntax-expand (car bodies))
+						 (syntax-expand (car bodies))
+						 (syntax-expand (or-exp (cdr bodies))))])]
 			[case-exp (id keys bodies)
 		     (if (null? keys)
 			 (syntax-expand (1st bodies))

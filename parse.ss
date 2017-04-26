@@ -70,6 +70,10 @@
 		    (map (lambda (x)
 			   (parse-exp (2nd x)))
 			 (cddr datum)))]
+		[(eqv? (car datum) 'and)
+			(and-exp (map parse-exp (cdr datum)))]
+		[(eqv? (car datum) 'or)
+			(or-exp (map parse-exp (cdr datum)))]
         [else (app-exp (parse-exp (1st datum))
            (map parse-exp (cdr datum)))])]
        [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -150,6 +154,12 @@
 			    (append (map list 
 					 (append (map unparse-exp preds) (list 'else))
 					 (map unparse-exp bodies)))))]
+	  [and-exp (bodies)
+	       (cons 'and
+		     (map unparse-exp bodies))]
+      [or-exp (bodies)
+	      (cons 'or
+		    (map unparse-exp bodies))]
       )))
 
 

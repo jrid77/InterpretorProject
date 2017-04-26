@@ -55,6 +55,10 @@
   [set!-exp
     (id symbol?)
     (body expression?)]
+  [and-exp
+	(preds (list-of expression?))]
+  [or-exp
+	(preds (list-of expression?))]
   [begin-exp
     (bodies (list-of expression?))]
   [while-exp
@@ -62,16 +66,15 @@
     (bodies (list-of expression?))]
   [case-exp
    (id expression?)
-   (keys (list-of (list-of literal-exp?)))
+   (keys (list-of (list-of lit-exp?)))
    (bodies (list-of expression?))]
   )	
   
- (define literal-exp?
-  (lambda (obj)
-    (and (list? obj)
-	 (eqv? (car obj) 'lit-exp)
-	 (literal? (cadr obj))
-	 (null? (cddr obj)))))
+ (define lit-exp?
+  (lambda (exp)
+	(cases expression exp
+	  [lit-exp (id) #t]
+	  [else #f])))
 	
 ;;; Environment type definitions
 (define-datatype environment environment?
