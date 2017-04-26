@@ -1,84 +1,82 @@
-(define lit?
-  (lambda (exp)
-    (or 
-      (boolean? exp)
-      (number? exp)
-      (string? exp)
-      (null? exp)
-      (vector? exp)
-      (char? exp)
-      (list? exp)
-      (symbol? exp))))
-
-(define ilos?
-  (lambda (ls)
-    (cond [(null? ls) #f]
-          [(not (pair? (cdr ls))) (and (symbol? (cdr ls)) (symbol? (car ls)))]
-          [else 
-            (and (symbol? (car ls))
-                  (ilos? (cdr ls)))])))
+;;;Defines datatypes to be used in the interpreter
 
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
   [lit-exp
-    (id lit?)]
+   (id lit?)]
   [lambda-exp
-    (declaration (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
-    (body (list-of expression?))]
-  [app-exp
-   (rator expression?)
-   (rands (list-of expression?))]
+   (declaration (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
+   (body (list-of expression?))]
   [if-else-exp
-    (con expression?)
-    (then expression?)
-    (els expression?)]
+   (con expression?)
+   (then expression?)
+   (els expression?)]
   [if-exp
-    (con expression?)
-    (then expression?)]
+   (con expression?)
+   (then expression?)]
   [let-exp
-    (declaration (list-of expression?))
-    (body (list-of expression?))]
+   (declaration (list-of expression?))
+   (body (list-of expression?))]
   [let-declaration-exp
-    (var expression?)
-    (binding expression?)]
+   (var expression?)
+   (binding expression?)]
   [named-let-exp
-    (name expression?)
-    (declaration (list-of expression?))
-    (body (list-of expression?))]
+   (name expression?)
+   (declaration (list-of expression?))
+   (body (list-of expression?))]
   [let*-exp
-    (declaration (list-of expression?))
-    (body (list-of expression?))]
+   (declaration (list-of expression?))
+   (body (list-of expression?))]
   [letrec-exp
-    (declaration (list-of expression?))
-    (body (list-of expression?))]
+   (declaration (list-of expression?))
+   (body (list-of expression?))]
   [set!-exp
-    (id symbol?)
-    (body expression?)]
+   (id symbol?)
+   (body expression?)]
   [and-exp
-	(preds (list-of expression?))]
+   (preds (list-of expression?))]
   [or-exp
-	(preds (list-of expression?))]
+   (preds (list-of expression?))]
   [begin-exp
-    (bodies (list-of expression?))]
+   (bodies (list-of expression?))]
   [while-exp
-    (test expression?)
-    (bodies (list-of expression?))]
+   (test expression?)
+   (bodies (list-of expression?))]
   [cond-exp
-    (tests (list-of expression?))
-	(bodies (list-of expression?))]
+   (tests (list-of expression?))
+   (bodies (list-of expression?))]
   [case-exp
    (id expression?)
    (keys (list-of (list-of lit-exp?)))
    (bodies (list-of expression?))]
-  )	
-  
- (define lit-exp?
+  [app-exp
+   (rator expression?)
+   (rands (list-of expression?))])	
+
+(define lit?
   (lambda (exp)
-	(cases expression exp
-	  [lit-exp (id) #t]
-	  [else #f])))
-	
+    (or (boolean? exp)
+	(number? exp)
+	(string? exp)
+	(null? exp)
+	(vector? exp)
+	(char? exp)
+	(list? exp)
+	(symbol? exp))))
+
+(define ilos?
+  (lambda (ls)
+    (cond [(null? ls) #f]
+          [(not (pair? (cdr ls))) (and (symbol? (cdr ls)) (symbol? (car ls)))]
+          [else (and (symbol? (car ls)) (ilos? (cdr ls)))])))
+
+(define lit-exp?
+  (lambda (exp)
+    (cases expression exp
+	   [lit-exp (id) #t]
+	   [else #f])))
+
 ;;; Environment type definitions
 (define-datatype environment environment?
   (empty-env-record)
@@ -86,15 +84,15 @@
    (syms (list-of symbol?))
    (vals (list-of scheme-value?))
    (env environment?)))
- 
+
 ;;; Datatype for procedures
 (define-datatype proc-val proc-val?
   [prim-proc
    (name symbol?)]
   [closure
-	(ids (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
-	(bodies (list-of expression?))
-	(env  environment?)]) 
+   (ids (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
+   (bodies (list-of expression?))
+   (env  environment?)]) 
  
 (define scheme-value?
   (lambda (x) #t))
