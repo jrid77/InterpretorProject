@@ -56,6 +56,16 @@
 			  declaration
 			  body
 			  env)]
+	     [lambda-exp-one-var (declaration body)
+				 (closure-one-var
+				  declaration
+				  body
+				  env)]
+	     [lambda-exp-improper-list (declaration body)
+				       (closure-improper-list
+					declaration
+					body
+					env)]
 	     [while-exp (test bodies)
 			(if (eval-exp test env)
 			    (eval-bodies (append bodies (list exp)) env))]
@@ -84,16 +94,21 @@
 	   [closure (ids bodies env) 
 		    (eval-bodies
 		     bodies
-		     (cond [(list? ids) (extend-env ids args env)]
-				   [(symbol? ids) (extend-env (list ids) (list args) env)]
-				   [else 
-					(let ([idslist (flatten ids)])
-					  (letrec ([helper 
-						(lambda (args ls)
-						  (if (null? (cdr ls))
-							  (list args)
-							  (cons (1st args) (helper (cdr args) (cdr ls)))))])
-					   (extend-env idslist (helper args idslist) env)))]))]
+		     (extend-env ids args env))]
+	   [closure-one-var (ids bodies env)
+			    (eval-bodies
+			     bodies
+			     (extend-env ids (list args) env))]
+	   [closure-improper-list (ids bodies env)
+				  (eval-bodies
+				   bodies
+				   (extend-env
+				    ids
+				    (let loop ([new-ids ids] [args args])
+				      (if (null? (cdr new-ids))
+					  (list args)
+					  (cons (1st args) (loop (cdr new-ids) (cdr args)))))
+				    env))]
 	   [else (error 'apply-proc
 			"Attempt to apply bad procedure: ~s" 
 			proc-value)])))

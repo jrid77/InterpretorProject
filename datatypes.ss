@@ -6,7 +6,13 @@
   [lit-exp
    (id lit?)]
   [lambda-exp
-   (declaration (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
+   (declaration (list-of symbol?))
+   (body (list-of expression?))]
+  [lambda-exp-one-var
+   (declaration (list-of symbol?))
+   (body (list-of expression?))]
+  [lambda-exp-improper-list
+   (declaration (list-of symbol?))
    (body (list-of expression?))]
   [if-else-exp
    (con expression?)
@@ -90,9 +96,17 @@
   [prim-proc
    (name symbol?)]
   [closure
-   (ids (lambda (x) (or (list-of symbol?) (symbol? x) (ilos? x))))
+   (ids (list-of symbol?))
    (bodies (list-of expression?))
-   (env  environment?)]) 
- 
+   (env  environment?)]
+  [closure-one-var
+   (ids (list-of symbol?))
+   (bodies (list-of expression?))
+   (env environment?)]
+  [closure-improper-list
+   (ids (list-of symbol?))
+   (bodies (list-of expression?))
+   (env environment?)])
+  
 (define scheme-value?
   (lambda (x) #t))

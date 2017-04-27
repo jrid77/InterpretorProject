@@ -17,9 +17,9 @@
 			  [(and (list? (2nd datum)) (andmap symbol? (2nd datum)))
 			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
 			  [(symbol? (2nd datum))
-			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+			   (lambda-exp-one-var (list (2nd datum)) (map parse-exp (cddr datum)))]
 			  [(and (pair? (2nd datum)) (ilos? (2nd datum)))
-			   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
+			   (lambda-exp-improper-list (flatten (2nd datum)) (map parse-exp (cddr datum)))]
 			  [else (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Use of Arguments" datum)])]
 		['while
 		 (while-exp (syntax-expand (parse-exp (2nd datum))) (map syntax-expand (map parse-exp (cddr datum))))]
@@ -110,6 +110,19 @@
 			 'lambda 
 			 declaration
 			 (map unparse-exp body)))]
+	   [lambda-exp-one-var (declaraion body)
+			       (append
+				(list 'lambda
+				      (1st declaration))
+				(map unparse-exp body))]
+	   [lambda-exp-improper-list (declaration body)
+				     (append
+				      (list 'lambda
+					    (let loop ([decs declaration])
+					      (if (null? (cdr decs))
+						  (1st decs)
+						  (cons (1st decs) (loop (cdr decs))))))
+				      (map unparse-exp body))]
 	   [if-exp (con then)
 		   (append
 		    (list 'if (unparse-exp con))
