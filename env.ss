@@ -7,6 +7,11 @@
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
+(define extend-env-recursively
+  (lambda (proc-names idss bodiess old-env)
+    (recursively-extended-env-record
+      proc-names idss bodiess old-env)))
+
 (define apply-env
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
@@ -15,7 +20,15 @@
 				(let ((pos (list-find-position sym syms)))
 				  (if (number? pos)
 				      (succeed (list-ref vals pos))
-				      (apply-env env sym succeed fail)))))))
+				      (apply-env env sym succeed fail))))
+     (recursively-extended-env-record (proc-names idss bodiess old-env)
+        (let ([pos (list-find-position sym proc-names)])
+          (if (number? pos)
+            (closure 
+              (list-ref idss pos)
+              (list-ref bodiess pos)
+              env)
+            (apply-env old-env sym succeed fail)))))))
 
 (define list-find-position
   (lambda (sym los)

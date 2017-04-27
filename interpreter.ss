@@ -39,6 +39,10 @@
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
+       [letrec-exp (proc-names idss bodiess letrec-bodies)
+          (eval-bodies letrec-bodies
+            (extend-env-recursively
+              proc-names idss bodiess env))]
 	     [app-exp (rator rands)
 		      (let ([proc-value (eval-exp rator env)]
 			    [args (eval-rands rands env)])
@@ -65,7 +69,7 @@
 				       (closure-improper-list
 					declaration
 					body
-					env)]
+					env)] 
 	     [while-exp (test bodies)
 			(if (eval-exp test env)
 			    (eval-bodies (append bodies (list exp)) env))]
