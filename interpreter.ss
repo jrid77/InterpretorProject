@@ -40,7 +40,7 @@
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
        [letrec-exp (proc-names idss bodiess letrec-bodies)
-          (eval-bodies letrec-bodies
+          (eval-bodies (map syntax-expand letrec-bodies)
             (extend-env-recursively
               proc-names idss bodiess env))]
 	     [app-exp (rator rands)
@@ -127,9 +127,9 @@
 ;; Establishing which primitives we support
 (define *prim-proc-names*
   '(+ - * / add1 sub1 cons = < > <= >= not
-      car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr 
-      list null? assq eq? equal? atom? length list->vector list? pair? procedure?
-      vector->list vector make-vector vector-ref vector? number? symbol? zero?
+      car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr list-tail
+      list null? assq eq? eqv? equal? atom? length list->vector list? pair? procedure?
+      vector->list vector make-vector vector-ref vector? number? symbol? zero? append
       set-car! set-cdr! vector-set! display newline map apply member quotient void))
 
 ;; Initializes a global environment with only primitives
@@ -176,6 +176,7 @@
       [(void) (void)]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
+      [(eqv?) (eqv? (1st args) (2nd args))]
       [(equal?) (equal? (1st args) (2nd args))]
       [(atom?) (atom? (1st args))]
       [(length) (length (1st args))]
@@ -197,6 +198,8 @@
       [(display) (if (null? (cdr args)) (display (1st args)) (display (1st args) (2nd args)))]
       [(newline) (if (null? args) (newline) (newline (1st args)))]
       [(quotient) (apply quotient args)]
+      [(append) (apply append args)]
+      [(list-tail) (list-tail (1st args) (2nd args))]
       [(map) (letrec 
 				 [(helper (lambda (ls)
 						(if (null? ls)

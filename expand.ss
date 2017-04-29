@@ -4,6 +4,18 @@
 (define syntax-expand
   (lambda (exp)
     (cases expression exp
+       [lambda-exp (declaration body)
+       	 (lambda-exp
+       	 	declaration
+       	 	(map syntax-expand body))]
+       [lambda-exp-one-var (declaration body)
+         (lambda-exp-one-var
+         	declaration
+         	(map syntax-expand body))]
+       [lambda-exp-improper-list (declaration body)
+         (lambda-exp-improper-list
+         	declaration
+         	(map syntax-expand body))]
 	   [let-exp (declaration body) 
 		    (app-exp 
 		     (lambda-exp (map unparse-exp (map extract-let-vars declaration))
@@ -18,14 +30,19 @@
 					      (list (car decs))
 					      (list (helper (cdr decs))))))])
 			(helper declarations)))]
-	   [named-let-exp (name vars bindings bodies)	   		
-	   		(syntax-expand 
+	   [letrec-exp (proc-names idss bodiess letrec-bodies)
+	   	(letrec-exp 
+	   		proc-names
+	   		idss
+	   		(map (lambda (x) (map syntax-expand x)) bodiess)
+	   		(map syntax-expand letrec-bodies))]
+	   [named-let-exp (name vars bindings bodies)	   		 
 	   			(letrec-exp
 	   				(list name)
 	   				(list vars)
-	   				(list bodies)
+	   				(list (map syntax-expand bodies))
 	   				(list (app-exp 
-	   					(var-exp name) bindings))))]
+	   					(var-exp name) (map syntax-expand bindings))))]
 	   [begin-exp (bodies)
 		      (syntax-expand 
 		       (let-exp '() bodies))]
@@ -36,8 +53,8 @@
 	   [if-else-exp (con then els)
 			(if-else-exp
 			 (syntax-expand con)
-			 then
-			 els)]
+			 (syntax-expand then)
+			 (syntax-expand els))]
 	   [cond-exp (preds bodies)
 		     (if (null? preds)
 			 (if (null? bodies)
@@ -79,6 +96,14 @@
 			  (syntax-expand (case-exp id (cdr keys) (cdr bodies)))))]
 	   [app-exp (rator rands)
 		    (app-exp (syntax-expand rator) (map syntax-expand rands))]
+	   [set!-exp (id body)
+	   	(set!-exp
+	   		id
+	   		(syntax-expand body))]
+	   [while-exp (test bodies)
+	   	(while-exp
+	   		(syntax-expand test)
+	   		(map syntax-expand bodies))]
 	   [else exp])))
 
 (define extract-let-vars
