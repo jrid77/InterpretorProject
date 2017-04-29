@@ -91,7 +91,7 @@
   (empty-env-record)
   (extended-env-record
    (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
+   (vals (list-of box?))
    (env environment?))
   (recursively-extended-env-record
     (proc-names (list-of symbol?))
