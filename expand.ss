@@ -18,6 +18,14 @@
 					      (list (car decs))
 					      (list (helper (cdr decs))))))])
 			(helper declarations)))]
+	   [named-let-exp (name vars bindings bodies)	   		
+	   		(syntax-expand 
+	   			(letrec-exp
+	   				(list name)
+	   				(list vars)
+	   				(list bodies)
+	   				(list (app-exp 
+	   					(var-exp name) bindings))))]
 	   [begin-exp (bodies)
 		      (syntax-expand 
 		       (let-exp '() bodies))]

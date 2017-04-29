@@ -28,9 +28,10 @@
    (var expression?)
    (binding expression?)]
   [named-let-exp
-   (name expression?)
-   (declaration (list-of expression?))
-   (body (list-of expression?))]
+   (name symbol?)
+   (vars (list-of symbol?))
+   (bindings (list-of expression?))
+   (let-bodies (list-of expression?))]
   [let*-exp
    (declaration (list-of expression?))
    (body (list-of expression?))]

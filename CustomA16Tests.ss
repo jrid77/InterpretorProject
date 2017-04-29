@@ -1,4 +1,5 @@
-(eval-one-exp '
+
+(display (list (eval-one-exp '
 	      (letrec ([fact (lambda (x)
 			       (if (zero? x) 
 				   1
@@ -14,4 +15,4 @@
 			       (if (zero? m)
 				   #f
 				   (even? (- m 1))))])
-		(list (odd? 3) (even? 3) (odd? 4) (even? 4))))
+		(list (odd? 3) (even? 3) (odd? 4) (even? 4))))))

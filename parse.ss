@@ -34,7 +34,11 @@
 			(if (symbol? (2nd datum))
 			(if (< (length datum) 4)
 				(eopl:error 'parse-exp "Named Let: ~s Incorrect Length" datum)
-				(named-let-exp (var-exp (2nd datum)) (let-parse-helper (3rd datum)) (map parse-exp (cdddr datum))))
+        (named-let-exp 
+          (2nd datum)
+          (map car (3rd datum))
+          (map (lambda (x) (parse-exp (cadr x))) (3rd datum))
+          (map parse-exp (cdddr datum))))
 			(if (< (length datum) 3)
 				(eopl:error 'parse-exp "Let Expression: ~s Incorrect Length" datum)
 				(let-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum)))))]
@@ -136,10 +140,8 @@
 			 (list 'if (unparse-exp con)) 
 			 (list (unparse-exp then))
 			 (list (unparse-exp els)))]
-	   [named-let-exp (name declaration body)
-			  (append
-			   (list 'let name (map unparse-exp declaration))
-			   (map unparse-exp body))]
+	   [named-let-exp (name vars bindings bodies)
+			  (eopl:error "HOW??")]
 	   [let-exp (declaration body)
 		    (append 
 		     (list 'let (map unparse-exp declaration))
@@ -147,7 +149,7 @@
 	   [let-declaration-exp (var binding)
 				(list (unparse-exp var) (unparse-exp binding))]
 	   [letrec-exp (proc-names idss bodiess letrec-bodies)
-		       (eopl:error "NOT DONE")]
+		       (eopl:error "HOW??")]
 	   [let*-exp (declaration body)
 		     (append
 		      (list 'let* (map unparse-exp declaration))
