@@ -36,10 +36,13 @@
    (declaration (list-of expression?))
    (body (list-of expression?))]
   [letrec-exp
-   (proc-names (list-of symbol?))
-   (idss (list-of (list-of symbol?)))
-   (bodiess (list-of (list-of expression?)))
-   (letrec-bodies (list-of expression?))]
+   (declaration (list-of expression?))
+   (body (list-of expression?))]
+  ;[letrec-exp
+   ;(proc-names (list-of symbol?))
+   ;(idss (list-of (list-of symbol?)))
+   ;(bodiess (list-of (list-of expression?)))
+   ;(letrec-bodies (list-of expression?))]
   [set!-exp
    (id symbol?)
    (body expression?)]

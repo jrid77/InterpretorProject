@@ -45,11 +45,12 @@
 		['letrec
 			(if (< (length datum) 3)
 			(eopl:error 'parse-exp "Letrec Expression: ~s Incorrect Length" datum)
-			(letrec-exp 
-        (map 1st (2nd datum)) 
-        (map 2nd (map 2nd (2nd datum)))
-        (map (lambda (v) (map parse-exp (cddr (2nd v)))) (2nd datum))
-        (map parse-exp (cddr datum))))]
+		(letrec-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
+;			(letrec-exp 
+ ;       (map 1st (2nd datum)) 
+  ;      (map 2nd (map 2nd (2nd datum)))
+   ;     (map (lambda (v) (map parse-exp (cddr (2nd v)))) (2nd datum))
+    ;    (map parse-exp (cddr datum))))]
 		['let*
 			(if (< (length datum) 3)
 			(eopl:error 'parse-exp "Let* Expression: ~s Incorrect Length" datum)
@@ -118,7 +119,7 @@
 			 'lambda 
 			 declaration
 			 (map unparse-exp body)))]
-	   [lambda-exp-one-var (declaraion body)
+	   [lambda-exp-one-var (declaration body)
 			       (append
 				(list 'lambda
 				      (1st declaration))
@@ -148,7 +149,7 @@
 		     (map unparse-exp body))]
 	   [let-declaration-exp (var binding)
 				(list (unparse-exp var) (unparse-exp binding))]
-	   [letrec-exp (proc-names idss bodiess letrec-bodies)
+	   [letrec-exp (declaration body)
 		       (eopl:error "HOW??")]
 	   [let*-exp (declaration body)
 		     (append

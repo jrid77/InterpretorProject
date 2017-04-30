@@ -28,7 +28,7 @@
 				 id 
 				 identity-proc ; procedure to call if id is in the environment
 				 (lambda () ; procedure to call if id not in env
-				   (apply-env global-env
+				   (apply-env-ref global-env
 					      id
 					      identity-proc
 					      (lambda () (eopl:error 'apply-env 
@@ -39,10 +39,10 @@
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
-       [letrec-exp (proc-names idss bodiess letrec-bodies)
-          (eval-bodies (map syntax-expand letrec-bodies)
-            (extend-env-recursively
-              proc-names idss bodiess env))]
+      ; [letrec-exp (proc-names idss bodiess letrec-bodies)
+        ;  (eval-bodies (map syntax-expand letrec-bodies)
+       ;     (extend-env-recursively
+         ;     proc-names idss bodiess env))]
 	     [app-exp (rator rands)
 		      (let ([proc-value (eval-exp rator env)]
 			    [args (eval-rands rands env)])
@@ -69,7 +69,20 @@
 				       (closure-improper-list
 					declaration
 					body
-					env)] 
+					env)]
+		 [set!-exp (id exp)
+			(set-ref!
+				(apply-env-ref env 
+								id 
+								identity-proc 
+								(lambda () 
+								   (apply-env-ref global-env
+										  id
+										  identity-proc
+										  (lambda () (eopl:error 'apply-env 
+													 "variable not found in environment: ~s"
+													 id)))))		
+				(eval-exp exp env))]
 	     [while-exp (test bodies)
 			(if (eval-exp test env)
 			    (eval-bodies (append bodies (list exp)) env))]

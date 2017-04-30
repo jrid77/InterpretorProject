@@ -30,19 +30,21 @@
 					      (list (car decs))
 					      (list (helper (cdr decs))))))])
 			(helper declarations)))]
-	   [letrec-exp (proc-names idss bodiess letrec-bodies)
-	   	(letrec-exp 
-	   		proc-names
-	   		idss
-	   		(map (lambda (x) (map syntax-expand x)) bodiess)
-	   		(map syntax-expand letrec-bodies))]
+	   [letrec-exp (declaration body)
+		(syntax-expand
+			(let ([vars (map extract-let-vars declaration)]
+					[bindings (map extract-let-bindings declaration)])
+				(let-exp 
+					(map (lambda (x) 
+							(let-declaration-exp x (lit-exp 'WhoCares?))) vars)
+						(append (make-set!-exps vars bindings)
+							body))))]
 	   [named-let-exp (name vars bindings bodies)	   		 
-	   			(letrec-exp
-	   				(list name)
-	   				(list vars)
-	   				(list (map syntax-expand bodies))
-	   				(list (app-exp 
-	   					(var-exp name) (map syntax-expand bindings))))]
+	   			(syntax-expand
+				  (letrec-exp
+					(list (let-declaration-exp (var-exp name) 
+										(lambda-exp vars bodies)))
+					(list (app-exp (var-exp name) bindings))))]
 	   [begin-exp (bodies)
 		      (syntax-expand 
 		       (let-exp '() bodies))]
@@ -117,3 +119,10 @@
     (cases expression x
 	   [let-declaration-exp (var binding) binding]
 	   [else (eopl:error 'eval-exp "Bad Let Declaration ~s Parse Error" x)])))
+
+(define make-set!-exps
+	(lambda (vars bindings)
+		(if (null? vars)
+			'()
+			(cons (set!-exp (unparse-exp (1st vars)) (1st bindings))
+				(make-set!-exps (cdr vars) (cdr bindings))))))

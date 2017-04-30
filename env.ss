@@ -17,7 +17,7 @@
 		(deref (apply-env-ref env sym succeed fail))))
 
 (define deref unbox)
-(define set!-ref set-box!)
+(define set-ref! set-box!)
 		
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
