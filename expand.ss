@@ -106,6 +106,10 @@
 	   	(while-exp
 	   		(syntax-expand test)
 	   		(map syntax-expand bodies))]
+	   [define-exp (var val)
+	   	(define-exp
+	   		var
+	   		(syntax-expand val))]
 	   [else exp])))
 
 (define extract-let-vars

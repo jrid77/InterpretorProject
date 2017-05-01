@@ -46,11 +46,6 @@
 			(if (< (length datum) 3)
 			(eopl:error 'parse-exp "Letrec Expression: ~s Incorrect Length" datum)
 		(letrec-exp (let-parse-helper (2nd datum)) (map parse-exp (cddr datum))))]
-;			(letrec-exp 
- ;       (map 1st (2nd datum)) 
-  ;      (map 2nd (map 2nd (2nd datum)))
-   ;     (map (lambda (v) (map parse-exp (cddr (2nd v)))) (2nd datum))
-    ;    (map parse-exp (cddr datum))))]
 		['let*
 			(if (< (length datum) 3)
 			(eopl:error 'parse-exp "Let* Expression: ~s Incorrect Length" datum)
@@ -58,7 +53,7 @@
 		['set!
 			(if (= 3 (length datum))
 			(if (symbol? (2nd datum))
-				(set!-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)))
+				(set!-exp (2nd datum) (parse-exp (3rd datum)))
 				(eopl:error 'parse-exp "Set! Expression: ~s Incorrect Argument Type" datum))
 			(eopl:error 'parse-exp "Set! Expression: ~s Incorrect Number of Arguments" datum))]
 		['begin
@@ -76,6 +71,10 @@
 		 (cond-exp (map (lambda (x) (parse-exp (1st x)))
 				(filter (lambda (x) (not (eqv? 'else (1st x)))) (cdr datum)))
 			   (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))]
+    ['define
+      (define-exp
+        (2nd datum)
+        (parse-exp (3rd datum)))]
 		[else (app-exp (parse-exp (1st datum))
 				   (map parse-exp (cdr datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -177,7 +176,8 @@
 			  (map unparse-exp bodies))]
 	   [or-exp (bodies)
 		   (cons 'or
-			 (map unparse-exp bodies))])))
+			 (map unparse-exp bodies))]
+     [else (eopl:error 'parse-exp "Why are you doing this?!")])))
 
 
 

@@ -38,11 +38,6 @@
   [letrec-exp
    (declaration (list-of expression?))
    (body (list-of expression?))]
-  ;[letrec-exp
-   ;(proc-names (list-of symbol?))
-   ;(idss (list-of (list-of symbol?)))
-   ;(bodiess (list-of (list-of expression?)))
-   ;(letrec-bodies (list-of expression?))]
   [set!-exp
    (id symbol?)
    (body expression?)]
@@ -62,6 +57,9 @@
    (id expression?)
    (keys (list-of (list-of lit-exp?)))
    (bodies (list-of expression?))]
+  [define-exp
+   (var symbol?)
+   (val expression?)]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))])	
