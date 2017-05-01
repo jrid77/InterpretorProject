@@ -3,8 +3,9 @@
   (lambda ()
     (display "--> ")
     (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
-      ;; TODO: when creating closures, display nothing also figure out this void thing
-      (eopl:pretty-print answer) (newline)
+      (if (eq? answer (void))
+        [begin (newline)]
+        [(eopl:pretty-print answer) (newline)])
       (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
@@ -15,7 +16,12 @@
 ;; later we may add things that are not expressions.
 (define top-level-eval
   (lambda (form)
-    (eval-exp form (empty-env))))
+    (cases expression form
+     (define-exp (var val) 
+        (begin
+          (mutate-global-env var (eval-exp val global-env))
+          (void))) 
+     (else (eval-exp form (empty-env))))))
 
 ;;; Main component of the interpreter
 (define eval-exp
@@ -39,10 +45,6 @@
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
-      ; [letrec-exp (proc-names idss bodiess letrec-bodies)
-        ;  (eval-bodies (map syntax-expand letrec-bodies)
-       ;     (extend-env-recursively
-         ;     proc-names idss bodiess env))]
 	     [app-exp (rator rands)
 		      (let ([proc-value (eval-exp rator env)]
 			    [args (eval-rands rands env)])
@@ -84,8 +86,10 @@
 													 id)))))		
 				(eval-exp exp env))]
 	     [while-exp (test bodies)
-			(if (eval-exp test env)
-			    (eval-bodies (append bodies (list exp)) env))]
+  			(if (eval-exp test env)
+  			    (eval-bodies (append bodies (list exp)) env))]
+       [define-exp (var val)
+         (top-level-eval exp)]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
@@ -145,12 +149,31 @@
       vector->list vector make-vector vector-ref vector? number? symbol? zero? append
       set-car! set-cdr! vector-set! display newline map apply member quotient void))
 
+(define *global-env-vars* (append *prim-proc-names* '()))
+
 ;; Initializes a global environment with only primitives
-(define global-env
-  (extend-env            
-   *prim-proc-names*   
-   (map prim-proc *prim-proc-names*)
-   (empty-env)))
+(define make-init-env
+  (lambda ()
+     (extend-env            
+      *prim-proc-names*   
+      (map prim-proc *prim-proc-names*)
+      (empty-env))))
+
+(define global-env (make-init-env))
+
+(define mutate-global-env
+  (lambda (sym val)
+    (cases environment global-env
+      (extended-env-record (syms vals env)
+        (set! global-env (extend-env 
+                          (cons sym syms)
+                          (cons val (map unbox vals))
+                          (empty-env))))
+      (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
+
+(define reset-global-env
+  (lambda ()
+    (set! global-env (make-init-env))))
 
 ;;; Cases out our primitive procedures
 (define apply-prim-proc
