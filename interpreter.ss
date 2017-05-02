@@ -3,9 +3,7 @@
   (lambda ()
     (display "--> ")
     (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
-      (if (eq? answer (void))
-        [begin (newline)]
-        [(eopl:pretty-print answer) (newline)])
+      (eopl:pretty-print answer) (newline)
       (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
