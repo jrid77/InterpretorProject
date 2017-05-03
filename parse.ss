@@ -71,10 +71,16 @@
 		 (cond-exp (map (lambda (x) (parse-exp (1st x)))
 				(filter (lambda (x) (not (eqv? 'else (1st x)))) (cdr datum)))
 			   (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))]
-    ['define
-      (define-exp
-        (2nd datum)
-        (parse-exp (3rd datum)))]
+		['define
+		  (define-exp
+			(2nd datum)
+			(parse-exp (3rd datum)))]
+		['for
+			(for-exp
+				(map parse-exp (1st (2nd datum)))
+				(parse-exp (caddr (2nd datum)))
+				(map parse-exp (cddddr (2nd datum)))
+				(map parse-exp (cddr datum)))]
 		[else (app-exp (parse-exp (1st datum))
 				   (map parse-exp (cdr datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))

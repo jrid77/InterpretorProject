@@ -60,6 +60,11 @@
   [define-exp
    (var symbol?)
    (val expression?)]
+  [for-exp
+	(init (list-of expression?))
+	(test expression?)
+	(update (list-of expression?))
+	(body (list-of expression?))]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))])	

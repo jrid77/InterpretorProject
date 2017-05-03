@@ -110,6 +110,26 @@
 	   	(define-exp
 	   		var
 	   		(syntax-expand val))]
+	   [for-exp (init test update body)
+		  (syntax-expand
+		    (begin-exp
+			(append 
+				(map syntax-expand init)
+				(list 
+				(syntax-expand
+					(named-let-exp 
+					'for-loop
+					'()
+					'()
+					(list 
+					(syntax-expand 
+						(if-exp
+							test
+							(begin-exp
+								(append body
+										update
+										(list (app-exp (var-exp 'for-loop) 
+										'())))))))))))))]
 	   [else exp])))
 
 (define extract-let-vars
