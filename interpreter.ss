@@ -15,11 +15,11 @@
 (define top-level-eval
   (lambda (form)
     (cases expression form
-     (define-exp (var val) 
-        (begin
-          (mutate-global-env var (eval-exp val global-env))
-          (void))) 
-     (else (eval-exp form (empty-env))))))
+	   (define-exp (var val) 
+	     (begin
+	       (mutate-global-env var (eval-exp val global-env))
+	       (void))) 
+	   (else (eval-exp form (empty-env))))))
 
 ;;; Main component of the interpreter
 (define eval-exp
@@ -33,11 +33,11 @@
 				 identity-proc ; procedure to call if id is in the environment
 				 (lambda () ; procedure to call if id not in env
 				   (apply-env-ref global-env
-					      id
-					      identity-proc
-					      (lambda () (eopl:error 'apply-env 
-								     "variable not found in environment: ~s"
-								     id)))))]
+						  id
+						  identity-proc
+						  (lambda () (eopl:error 'apply-env 
+									 "variable not found in environment: ~s"
+									 id)))))]
 	     [let-exp (declaration body)
 		      (eval-bodies body
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
@@ -70,24 +70,24 @@
 					declaration
 					body
 					env)]
-		 [set!-exp (id exp)
-			(set-ref!
-				(apply-env-ref env 
-								id 
-								identity-proc 
-								(lambda () 
-								   (apply-env-ref global-env
-										  id
-										  identity-proc
-										  (lambda () (eopl:error 'apply-env 
-													 "variable not found in environment: ~s"
-													 id)))))		
-				(eval-exp exp env))]
+	     [set!-exp (id exp)
+		       (set-ref!
+			(apply-env-ref env 
+				       id 
+				       identity-proc 
+				       (lambda () 
+					 (apply-env-ref global-env
+							id
+							identity-proc
+							(lambda () (eopl:error 'apply-env 
+									       "variable not found in environment: ~s"
+									       id)))))		
+			(eval-exp exp env))]
 	     [while-exp (test bodies)
   			(if (eval-exp test env)
   			    (eval-bodies (append bodies (list exp)) env))]
-       [define-exp (var val)
-         (top-level-eval exp)]
+	     [define-exp (var val)
+	       (top-level-eval exp)]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
@@ -138,7 +138,7 @@
      [(null? ls) '()]
      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
      [else (list ls)])))					
-					
+
 ;; Establishing which primitives we support
 (define *prim-proc-names*
   '(+ - * / add1 sub1 cons = < > <= >= not
@@ -152,22 +152,22 @@
 ;; Initializes a global environment with only primitives
 (define make-init-env
   (lambda ()
-     (extend-env            
-      *prim-proc-names*   
-      (map prim-proc *prim-proc-names*)
-      (empty-env))))
+    (extend-env            
+     *prim-proc-names*   
+     (map prim-proc *prim-proc-names*)
+     (empty-env))))
 
 (define global-env (make-init-env))
 
 (define mutate-global-env
   (lambda (sym val)
     (cases environment global-env
-      (extended-env-record (syms vals env)
-        (set! global-env (extend-env 
-                          (cons sym syms)
-                          (cons val (map unbox vals))
-                          (empty-env))))
-      (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
+	   (extended-env-record (syms vals env)
+				(set! global-env (extend-env 
+						  (cons sym syms)
+						  (cons val (map unbox vals))
+						  (empty-env))))
+	   (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
 
 (define reset-global-env
   (lambda ()
@@ -235,12 +235,12 @@
       [(append) (apply append args)]
       [(list-tail) (list-tail (1st args) (2nd args))]
       [(map) (letrec 
-				 [(helper (lambda (ls)
-						(if (null? ls)
-						'()
-						(cons (apply-proc (1st args) (list (1st ls)))
-							  (helper (cdr ls))))))]
-				   (helper (2nd args)))]
+		 [(helper (lambda (ls)
+			    (if (null? ls)
+				'()
+				(cons (apply-proc (1st args) (list (1st ls)))
+				      (helper (cdr ls))))))]
+	       (helper (2nd args)))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 
