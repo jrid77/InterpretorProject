@@ -74,22 +74,9 @@
 		     (lit-exp #f)]
 		    [(null? (cdr bodies))
 		     (syntax-expand (car bodies))]
-		    [else
-	 (syntax-expand 
-			(let-exp
-			  (list 	(let-declaration-exp (var-exp 'x) (syntax-expand (car bodies))))
-		     (list (if-else-exp
-		      (var-exp 'x)
-			  (var-exp 'x)
-		      (syntax-expand (or-exp (cdr bodies)))))))])]
+		    [else	
 		     (syntax-expand 
 		      (let-exp
-		       (list (let-declaration-exp 'LetVar-ForOrT0Work
-						  (syntax-expand (car bodies))))
-		       (list (if-else-exp
-			      (var-exp 'LetVar-ForOrT0Work)
-			      (var-exp 'LetVar-ForOrT0Work)
-			      (or-exp (cdr bodies))))))])]
 		       (list (let-declaration-exp 'LetVar-ForOrT0Work
 						  (syntax-expand (car bodies))))
 		       (list (if-else-exp
