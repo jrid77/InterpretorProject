@@ -85,7 +85,7 @@
 		    [else
 			  (syntax-expand 
 			(let-exp
-			  (list 	(let-declaration-exp (var-exp 'x) (syntax-expand (car bodies))))
+			  (list (let-declaration-exp (var-exp 'x) (syntax-expand (car bodies))))
 		     (list (if-else-exp
 		      (var-exp 'x)
 			  (var-exp 'x)
