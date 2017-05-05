@@ -25,7 +25,7 @@
    (declaration (list-of expression?))
    (body (list-of expression?))]
   [let-declaration-exp
-   (var expression?)
+   (var symbol?)
    (binding expression?)]
   [named-let-exp
    (name symbol?)
@@ -58,8 +58,8 @@
    (keys (list-of (list-of lit-exp?)))
    (bodies (list-of expression?))]
   [define-exp
-   (var symbol?)
-   (val expression?)]
+    (var symbol?)
+    (val expression?)]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))])	
@@ -95,10 +95,10 @@
    (vals (list-of box?))
    (env environment?))
   (recursively-extended-env-record
-    (proc-names (list-of symbol?))
-    (idss (list-of (list-of symbol?)))
-    (bodiess (list-of (list-of expression?)))
-    (env environment?)))
+   (proc-names (list-of symbol?))
+   (idss (list-of (list-of symbol?)))
+   (bodiess (list-of (list-of expression?)))
+   (env environment?)))
 
 ;;; Datatype for procedures
 (define-datatype proc-val proc-val?
@@ -116,6 +116,6 @@
    (ids (list-of symbol?))
    (bodies (list-of expression?))
    (env environment?)])
-  
+
 (define scheme-value?
   (lambda (x) #t))
