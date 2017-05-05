@@ -83,10 +83,13 @@
 		    [(null? (cdr bodies))
 		     (syntax-expand (car bodies))]
 		    [else
-		     (if-else-exp
-		      (syntax-expand (car bodies))
-		      (syntax-expand (car bodies))
-		      (syntax-expand (or-exp (cdr bodies))))])]
+			  (syntax-expand 
+			(let-exp
+			  (list 	(let-declaration-exp (var-exp 'x) (syntax-expand (car bodies))))
+		     (list (if-else-exp
+		      (var-exp 'x)
+			  (var-exp 'x)
+		      (syntax-expand (or-exp (cdr bodies)))))))])]
 	   [case-exp (id keys bodies)
 		     (if (null? keys)
 			 (syntax-expand (1st bodies))
