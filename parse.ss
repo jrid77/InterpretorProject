@@ -14,7 +14,7 @@
       (case (1st datum)
 	['lambda 
 	    (cond [(< (length datum) 3) (eopl:error 'parse-exp "Lambda Expression: ~s Incorrect Length" datum)]
-		  [(and (list? (2nd datum)) (andmap symbol? (2nd datum)))
+		  [(and (list? (2nd datum)) (andmap symbol-or-reference? (2nd datum)))
 		   (lambda-exp (2nd datum) (map parse-exp (cddr datum)))]
 		  [(symbol? (2nd datum))
 		   (lambda-exp-one-var (list (2nd datum)) (map parse-exp (cddr datum)))]

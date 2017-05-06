@@ -44,8 +44,14 @@
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
 	     [app-exp (rator rands)
-		      (let ([proc-value (eval-exp rator env)]
-			    [args (eval-rands rands env)])
+					;(let ([proc-value (eval-exp rator env)]
+					; [args (eval-rands rands env)])
+		      (let* ([proc-value (eval-exp rator env)]
+			     [args (cases proc-val proc-value
+						  [closure (vars bodies dontCareAboutThisEnv)
+							(eval-ref-rands vars rands env)];eval the var bindings in 
+						  [else									;exterior environment
+						   (eval-rands rands env)])]) 		   
 			(apply-proc proc-value args))]
 	     [if-else-exp (con then els)
 			  (if (eval-exp con env)
@@ -94,6 +100,27 @@
 (define eval-rands
   (lambda (rands env)
     (map (lambda (e) (eval-exp e env)) rands)))
+
+(define eval-ref-rands
+  (trace-lambda ref-rands (vars rands env)
+    (map (lambda (var-to-lookup exp)
+ 	   (if (pair? var-to-lookup) ;if (ref x)
+	       (cases expression exp
+				  [var-exp (id)
+					   (apply-env-ref env id
+							  (lambda (x) x)
+							  (lambda ()
+								  (apply-env-ref global-env id
+										 (lambda (x) x)
+										 (lambda ()
+										   (error 'apply-env-ref
+											  "variable ~s is not bound"
+											  id)))))]
+				  [else
+				   (error 'eval-rands-ref
+					  "Shouldn't be looking this up")])
+	       (eval-exp exp env))) ;defer to evaluating the expression
+ 	 vars rands)))
 
 ;;; Evaluate the bodies returning the value of the last
 (define eval-bodies

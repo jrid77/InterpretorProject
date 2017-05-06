@@ -6,7 +6,7 @@
   [lit-exp
    (id lit?)]
   [lambda-exp
-   (declaration (list-of symbol?))
+   (declaration (list-of lambda-input?))
    (body (list-of expression?))]
   [lambda-exp-one-var
    (declaration (list-of symbol?))
@@ -64,6 +64,14 @@
    (rator expression?)
    (rands (list-of expression?))])	
 
+(define lambda-input?
+  (lambda (input)
+    (or (symbol? input)
+	(and (pair? input)
+	     (eqv? (car input) 'ref)
+	     (symbol? (cadr input))
+	     (null? (cddr input))))))   
+   
 (define lit?
   (lambda (exp)
     (or (boolean? exp)
@@ -93,11 +101,6 @@
   (extended-env-record
    (syms (list-of symbol?))
    (vals (list-of box?))
-   (env environment?))
-  (recursively-extended-env-record
-   (proc-names (list-of symbol?))
-   (idss (list-of (list-of symbol?)))
-   (bodiess (list-of (list-of expression?)))
    (env environment?)))
 
 ;;; Datatype for procedures
@@ -105,7 +108,7 @@
   [prim-proc
    (name symbol?)]
   [closure
-   (ids (list-of symbol?))
+   (ids (list-of lambda-input?))
    (bodies (list-of expression?))
    (env  environment?)]
   [closure-one-var
