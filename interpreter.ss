@@ -1,21 +1,25 @@
 ;;; Main "read-eval-print" loop.
+(define lep
+  (lambda (exp)
+    (lexical-address (syntax-expand (parse-exp exp)))))
+
 (define rep      
   (lambda ()
     (display "--> ")
-    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
+    (let ([answer (top-level-eval (lep (read)))])
       (eopl:pretty-print answer) (newline)
       (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
 (define eval-one-exp
-  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+  (lambda (x) (top-level-eval (lep x))))
 
 ;;; Evaluates a form in the global environment
 ;; later we may add things that are not expressions.
 (define top-level-eval
   (lambda (form)
     (cases expression form
-	   (define-exp (var val) 
+	   (define-exp (var val)
 	     (begin
 	       (mutate-global-env var (eval-exp val global-env))
 	       (void))) 
@@ -28,7 +32,7 @@
       (cases expression exp
 	     [lit-exp (datum) datum]
 	     [var-exp (id) ;look up its value.
-		      (apply-env env 
+		    (apply-env env 
 				 id 
 				 identity-proc ; procedure to call if id is in the environment
 				 (lambda () ; procedure to call if id not in env
@@ -38,18 +42,28 @@
 						  (lambda () (eopl:error 'apply-env 
 									 "variable not found in environment: ~s"
 									 id)))))]
+       [lexical-exp (depth index)
+          (if (eq? depth 'free)
+              (apply-env global-env
+                index
+                identity-proc
+                (lambda () (eopl:error 'apply-env
+                    "variable not found in environment: ~s"
+                    index)))
+              (apply-env-lex env depth index identity-proc 
+                (lambda () (eopl:error 'apply-env 
+                   "variable not found in environment: ~s"
+                   id))))]
 	     [let-exp (declaration body)
 		      (eval-bodies body
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
 	     [app-exp (rator rands)
-					;(let ([proc-value (eval-exp rator env)]
-					; [args (eval-rands rands env)])
 		      (let* ([proc-value (eval-exp rator env)]
 			     [args (cases proc-val proc-value
-						  [closure (vars bodies dontCareAboutThisEnv)
-							(eval-ref-rands vars rands env)];eval the var bindings in 
+              [closure (vars bodies dontCareAboutThis)
+                (eval-ref-rands vars rands env)]
 						  [else									;exterior environment
 						   (eval-rands rands env)])]) 		   
 			(apply-proc proc-value args))]
@@ -78,17 +92,26 @@
 					env)]
 	     [set!-exp (id exp)
 		       (set-ref!
-			(apply-env-ref env 
-				       id 
-				       identity-proc 
-				       (lambda () 
-					 (apply-env-ref global-env
-							id
-							identity-proc
-							(lambda () (eopl:error 'apply-env 
-									       "variable not found in environment: ~s"
-									       id)))))		
-			(eval-exp exp env))]
+              (cases expression id
+                [lexical-exp (depth index)
+                  (if (eq? 'free depth)
+                    (apply-env-ref 
+                      global-env
+                      index
+                      identity-proc
+                      (lambda () (eopl:error 'apply-env 
+                         "variable not found in environment: ~s"
+                         id)))
+                    (apply-env-lex-ref
+                      env
+                      depth
+                      index
+                      identity-proc
+                      (lambda () (eopl:error 'apply-env 
+                         "variable not found in environment: ~s"
+                         id))))]
+                [else (eopl:error 'set!-exp "wut")])
+			       (eval-exp exp env))]
 	     [while-exp (test bodies)
   			(if (eval-exp test env)
   			    (eval-bodies (append bodies (list exp)) env))]
@@ -100,6 +123,7 @@
 (define eval-rands
   (lambda (rands env)
     (map (lambda (e) (eval-exp e env)) rands)))
+
 
 (define eval-ref-rands
   (lambda (vars rands env)
@@ -116,6 +140,23 @@
 										   (error 'apply-env-ref
 											  "variable ~s is not bound"
 											  id)))))]
+          [lexical-exp (depth index)
+            (if (eq? 'free depth)
+                (apply-env-ref 
+                  global-env
+                  index
+                  (lambda (x) x)
+                  (lambda () (eopl:error 'apply-env 
+                     "variable not found in environment: ~s"
+                     id)))
+                (apply-env-lex-ref
+                  env
+                  depth
+                  index
+                  (lambda (x) x)
+                  (lambda () (eopl:error 'apply-env 
+                     "variable not found in environment: ~s"
+                     id))))]
 				  [else
 				   (error 'eval-rands-ref
 					  "Shouldn't be looking this up")])

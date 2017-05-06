@@ -39,7 +39,7 @@
    (declaration (list-of expression?))
    (body (list-of expression?))]
   [set!-exp
-   (id symbol?)
+   (id (lambda (x) (or (expression? x) (symbol? x))))
    (body expression?)]
   [and-exp
    (preds (list-of expression?))]
@@ -60,6 +60,9 @@
   [define-exp
     (var symbol?)
     (val expression?)]
+  [lexical-exp
+    (depth (lambda (x) (or (eq? 'free x) (number? x))))
+    (index (lambda (x) (or (symbol? x) (number? x))))]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))])	
@@ -122,3 +125,4 @@
 
 (define scheme-value?
   (lambda (x) #t))
+

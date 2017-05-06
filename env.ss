@@ -20,6 +20,19 @@
 
 (define deref unbox)
 (define set-ref! set-box!)
+
+(define apply-env-lex
+  (lambda (env depth index succeed fail)
+    (deref (apply-env-lex-ref env depth index succeed fail))))
+
+(define apply-env-lex-ref
+  (lambda (env depth index succeed fail)
+    (cases environment env
+      (empty-env-record () (fail))
+      (extended-env-record (syms vals env)
+        (if (= 0 depth)
+            (succeed (list-ref vals index))
+            (apply-env-lex-ref env (sub1 depth) index succeed fail))))))
 		
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
