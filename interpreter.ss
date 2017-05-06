@@ -102,7 +102,7 @@
     (map (lambda (e) (eval-exp e env)) rands)))
 
 (define eval-ref-rands
-  (trace-lambda ref-rands (vars rands env)
+  (lambda (vars rands env)
     (map (lambda (var-to-lookup exp)
  	   (if (pair? var-to-lookup) ;if (ref x)
 	       (cases expression exp
