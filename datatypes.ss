@@ -6,7 +6,7 @@
   [lit-exp
    (id lit?)]
   [lambda-exp
-   (declaration (list-of lambda-input?))
+   (declaration (list-of symbol?))
    (body (list-of expression?))]
   [lambda-exp-one-var
    (declaration (list-of symbol?))
@@ -25,7 +25,7 @@
    (declaration (list-of expression?))
    (body (list-of expression?))]
   [let-declaration-exp
-   (var symbol?)
+   (var expression?)
    (binding expression?)]
   [named-let-exp
    (name symbol?)
@@ -39,7 +39,7 @@
    (declaration (list-of expression?))
    (body (list-of expression?))]
   [set!-exp
-   (id (lambda (x) (or (expression? x) (symbol? x))))
+   (id symbol?)
    (body expression?)]
   [and-exp
    (preds (list-of expression?))]
@@ -58,23 +58,12 @@
    (keys (list-of (list-of lit-exp?)))
    (bodies (list-of expression?))]
   [define-exp
-    (var symbol?)
-    (val expression?)]
-  [lexical-exp
-    (depth (lambda (x) (or (eq? 'free x) (number? x))))
-    (index (lambda (x) (or (symbol? x) (number? x))))]
+   (var symbol?)
+   (val expression?)]
   [app-exp
    (rator expression?)
    (rands (list-of expression?))])	
 
-(define lambda-input?
-  (lambda (input)
-    (or (symbol? input)
-	(and (pair? input)
-	     (eqv? (car input) 'ref)
-	     (symbol? (cadr input))
-	     (null? (cddr input))))))   
-   
 (define lit?
   (lambda (exp)
     (or (boolean? exp)
@@ -104,14 +93,19 @@
   (extended-env-record
    (syms (list-of symbol?))
    (vals (list-of box?))
-   (env environment?)))
+   (env environment?))
+  (recursively-extended-env-record
+    (proc-names (list-of symbol?))
+    (idss (list-of (list-of symbol?)))
+    (bodiess (list-of (list-of expression?)))
+    (env environment?)))
 
 ;;; Datatype for procedures
 (define-datatype proc-val proc-val?
   [prim-proc
    (name symbol?)]
   [closure
-   (ids (list-of lambda-input?))
+   (ids (list-of symbol?))
    (bodies (list-of expression?))
    (env  environment?)]
   [closure-one-var
@@ -122,7 +116,6 @@
    (ids (list-of symbol?))
    (bodies (list-of expression?))
    (env environment?)])
-
+  
 (define scheme-value?
   (lambda (x) #t))
-

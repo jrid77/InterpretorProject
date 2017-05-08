@@ -5,34 +5,19 @@
 
 (define extend-env
   (lambda (syms vals env)
-    ;(extended-env-record syms (map box vals) env)))
-	(extended-env-record 
-		(map (lambda (sym) ;if (ref x) return x, else the sym
-				(if (pair? sym) (cadr sym) sym)) syms)
-		(map (lambda (val) ;if already in box, return that box
-				(if (box? val) val (box val))) 
-			  vals)
-		env)))
-	
+    (extended-env-record syms (map box vals) env)))
+
+(define extend-env-recursively
+  (lambda (proc-names idss bodiess old-env)
+    (recursively-extended-env-record
+      proc-names idss bodiess old-env)))
+
 (define apply-env
 	(lambda (env sym succeed fail)
 		(deref (apply-env-ref env sym succeed fail))))
 
 (define deref unbox)
 (define set-ref! set-box!)
-
-(define apply-env-lex
-  (lambda (env depth index succeed fail)
-    (deref (apply-env-lex-ref env depth index succeed fail))))
-
-(define apply-env-lex-ref
-  (lambda (env depth index succeed fail)
-    (cases environment env
-      (empty-env-record () (fail))
-      (extended-env-record (syms vals env)
-        (if (= 0 depth)
-            (succeed (list-ref vals index))
-            (apply-env-lex-ref env (sub1 depth) index succeed fail))))))
 		
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
@@ -42,7 +27,15 @@
 				(let ((pos (list-find-position sym syms)))
 				  (if (number? pos)
 				      (succeed (list-ref vals pos))
-				      (apply-env-ref env sym succeed fail)))))))
+				      (apply-env-ref env sym succeed fail))))
+     (recursively-extended-env-record (proc-names idss bodiess old-env)
+        (let ([pos (list-find-position sym proc-names)])
+          (if (number? pos)
+            (closure 
+              (list-ref idss pos)
+              (list-ref bodiess pos)
+              env)
+            (apply-env old-env sym succeed fail)))))))
 
 (define list-find-position
   (lambda (sym los)

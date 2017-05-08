@@ -1,29 +1,25 @@
 ;;; Main "read-eval-print" loop.
-(define lep
-  (lambda (exp)
-    (lexical-address (syntax-expand (parse-exp exp)))))
-
 (define rep      
   (lambda ()
     (display "--> ")
-    (let ([answer (top-level-eval (lep (read)))])
+    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
       (eopl:pretty-print answer) (newline)
       (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
 (define eval-one-exp
-  (lambda (x) (top-level-eval (lep x))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
 ;;; Evaluates a form in the global environment
 ;; later we may add things that are not expressions.
 (define top-level-eval
   (lambda (form)
     (cases expression form
-	   (define-exp (var val)
-	     (begin
-	       (mutate-global-env var (eval-exp val global-env))
-	       (void))) 
-	   (else (eval-exp form (empty-env))))))
+     (define-exp (var val) 
+        (begin
+          (mutate-global-env var (eval-exp val global-env))
+          (void))) 
+     (else (eval-exp form (empty-env))))))
 
 ;;; Main component of the interpreter
 (define eval-exp
@@ -32,40 +28,24 @@
       (cases expression exp
 	     [lit-exp (datum) datum]
 	     [var-exp (id) ;look up its value.
-		    (apply-env env 
+		      (apply-env env 
 				 id 
 				 identity-proc ; procedure to call if id is in the environment
 				 (lambda () ; procedure to call if id not in env
 				   (apply-env-ref global-env
-						  id
-						  identity-proc
-						  (lambda () (eopl:error 'apply-env 
-									 "variable not found in environment: ~s"
-									 id)))))]
-       [lexical-exp (depth index)
-          (if (eq? depth 'free)
-              (apply-env global-env
-                index
-                identity-proc
-                (lambda () (eopl:error 'apply-env
-                    "variable not found in environment: ~s"
-                    index)))
-              (apply-env-lex env depth index identity-proc 
-                (lambda () (eopl:error 'apply-env 
-                   "variable not found in environment: ~s"
-                   id))))]
+					      id
+					      identity-proc
+					      (lambda () (eopl:error 'apply-env 
+								     "variable not found in environment: ~s"
+								     id)))))]
 	     [let-exp (declaration body)
 		      (eval-bodies body
 				   (extend-env (map unparse-exp (map extract-let-vars declaration))
 					       (eval-rands (map extract-let-bindings declaration) env)
 					       env))]
 	     [app-exp (rator rands)
-		      (let* ([proc-value (eval-exp rator env)]
-			     [args (cases proc-val proc-value
-              [closure (vars bodies dontCareAboutThis)
-                (eval-ref-rands vars rands env)]
-						  [else									;exterior environment
-						   (eval-rands rands env)])]) 		   
+		      (let ([proc-value (eval-exp rator env)]
+			    [args (eval-rands rands env)])
 			(apply-proc proc-value args))]
 	     [if-else-exp (con then els)
 			  (if (eval-exp con env)
@@ -90,78 +70,30 @@
 					declaration
 					body
 					env)]
-	     [set!-exp (id exp)
-		       (set-ref!
-              (cases expression id
-                [lexical-exp (depth index)
-                  (if (eq? 'free depth)
-                    (apply-env-ref 
-                      global-env
-                      index
-                      identity-proc
-                      (lambda () (eopl:error 'apply-env 
-                         "variable not found in environment: ~s"
-                         id)))
-                    (apply-env-lex-ref
-                      env
-                      depth
-                      index
-                      identity-proc
-                      (lambda () (eopl:error 'apply-env 
-                         "variable not found in environment: ~s"
-                         id))))]
-                [else (eopl:error 'set!-exp "wut")])
-			       (eval-exp exp env))]
+		 [set!-exp (id exp)
+			(set-ref!
+				(apply-env-ref env 
+								id 
+								identity-proc 
+								(lambda () 
+								   (apply-env-ref global-env
+										  id
+										  identity-proc
+										  (lambda () (eopl:error 'apply-env 
+													 "variable not found in environment: ~s"
+													 id)))))		
+				(eval-exp exp env))]
 	     [while-exp (test bodies)
   			(if (eval-exp test env)
   			    (eval-bodies (append bodies (list exp)) env))]
-	     [define-exp (var val)
-	       (top-level-eval exp)]
+       [define-exp (var val)
+         (top-level-eval exp)]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env)
     (map (lambda (e) (eval-exp e env)) rands)))
-
-
-(define eval-ref-rands
-  (lambda (vars rands env)
-    (map (lambda (var-to-lookup exp)
- 	   (if (pair? var-to-lookup) ;if (ref x)
-	       (cases expression exp
-				  [var-exp (id)
-					   (apply-env-ref env id
-							  (lambda (x) x)
-							  (lambda ()
-								  (apply-env-ref global-env id
-										 (lambda (x) x)
-										 (lambda ()
-										   (error 'apply-env-ref
-											  "variable ~s is not bound"
-											  id)))))]
-          [lexical-exp (depth index)
-            (if (eq? 'free depth)
-                (apply-env-ref 
-                  global-env
-                  index
-                  (lambda (x) x)
-                  (lambda () (eopl:error 'apply-env 
-                     "variable not found in environment: ~s"
-                     id)))
-                (apply-env-lex-ref
-                  env
-                  depth
-                  index
-                  (lambda (x) x)
-                  (lambda () (eopl:error 'apply-env 
-                     "variable not found in environment: ~s"
-                     id))))]
-				  [else
-				   (error 'eval-rands-ref
-					  "Shouldn't be looking this up")])
-	       (eval-exp exp env))) ;defer to evaluating the expression
- 	 vars rands)))
 
 ;;; Evaluate the bodies returning the value of the last
 (define eval-bodies
@@ -206,7 +138,7 @@
      [(null? ls) '()]
      [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
      [else (list ls)])))					
-
+					
 ;; Establishing which primitives we support
 (define *prim-proc-names*
   '(+ - * / add1 sub1 cons = < > <= >= not
@@ -220,22 +152,22 @@
 ;; Initializes a global environment with only primitives
 (define make-init-env
   (lambda ()
-    (extend-env            
-     *prim-proc-names*   
-     (map prim-proc *prim-proc-names*)
-     (empty-env))))
+     (extend-env            
+      *prim-proc-names*   
+      (map prim-proc *prim-proc-names*)
+      (empty-env))))
 
 (define global-env (make-init-env))
 
 (define mutate-global-env
   (lambda (sym val)
     (cases environment global-env
-	   (extended-env-record (syms vals env)
-				(set! global-env (extend-env 
-						  (cons sym syms)
-						  (cons val (map unbox vals))
-						  (empty-env))))
-	   (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
+      (extended-env-record (syms vals env)
+        (set! global-env (extend-env 
+                          (cons sym syms)
+                          (cons val (map unbox vals))
+                          (empty-env))))
+      (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
 
 (define reset-global-env
   (lambda ()
@@ -303,12 +235,12 @@
       [(append) (apply append args)]
       [(list-tail) (list-tail (1st args) (2nd args))]
       [(map) (letrec 
-		 [(helper (lambda (ls)
-			    (if (null? ls)
-				'()
-				(cons (apply-proc (1st args) (list (1st ls)))
-				      (helper (cdr ls))))))]
-	       (helper (2nd args)))]
+				 [(helper (lambda (ls)
+						(if (null? ls)
+						'()
+						(cons (apply-proc (1st args) (list (1st ls)))
+							  (helper (cdr ls))))))]
+				   (helper (2nd args)))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 

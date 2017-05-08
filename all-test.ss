@@ -22,12 +22,6 @@
       (load "16_test.ss")
       (r)
       (newline)
-      
-      (display "17 Tests")
-      (newline)
-      (load "17_test.ss")
-      (r)
-      (newline)
       )
     )
   )

@@ -8,7 +8,6 @@
 (define load-all
   (lambda ()
     (load "datatypes.ss")
-    (load "lexical.ss")
     (load "parse.ss")
     (load "env.ss")
     (load "expand.ss")
