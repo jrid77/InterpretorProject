@@ -7,14 +7,9 @@
   (lambda (syms vals env)
     (extended-env-record syms (map box vals) env)))
 
-(define extend-env-recursively
-  (lambda (proc-names idss bodiess old-env)
-    (recursively-extended-env-record
-      proc-names idss bodiess old-env)))
-
 (define apply-env
 	(lambda (env sym succeed fail)
-		(deref (apply-env-ref env sym succeed fail))))
+		(apply-env-ref env sym (ref-to-deref-k succeed) fail)))
 
 (define deref unbox)
 (define set-ref! set-box!)
@@ -22,24 +17,20 @@
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
-	   (empty-env-record () (fail))
+	   (empty-env-record () (apply-k fail))
 	   (extended-env-record (syms vals env)
-				(let ((pos (list-find-position sym syms)))
-				  (if (number? pos)
-				      (succeed (list-ref vals pos))
-				      (apply-env-ref env sym succeed fail))))
-     )))
+	   		(list-find-position sym syms 
+	   			(find-pos-k vals env sym succeed fail)		
+     )))))
 
 (define list-find-position
-  (lambda (sym los)
-    (list-index (lambda (xsym) (eqv? sym xsym)) los)))
+  (lambda (sym los k)
+  	(list-index sym los k)))
 
 (define list-index
-  (lambda (pred ls)
-    (cond
-     ((null? ls) #f)
-     ((pred (car ls)) 0)
-     (else (let ((list-index-r (list-index pred (cdr ls))))
-	     (if (number? list-index-r)
-		 (+ 1 list-index-r)
-		 #f))))))
+  (lambda (sym ls k)
+  	(cond 
+  		[(null? ls) (apply-k k #f)]
+  		[(eqv? sym (car ls)) (apply-k k 0)]
+  		[(else (list-index sym (cdr ls)
+  							(index-cdr-res-k k)))])))

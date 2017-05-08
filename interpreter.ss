@@ -12,85 +12,101 @@
 
 ;;; Evaluates a form in the global environment
 ;; later we may add things that are not expressions.
+;;TODO
 (define top-level-eval
   (lambda (form)
     (cases expression form
      (define-exp (var val) 
         (begin
           (mutate-global-env var (eval-exp val global-env))
-          (void))) 
+          (void)))
      (else (eval-exp form (empty-env))))))
 
 ;;; Main component of the interpreter
 (define eval-exp
   (let ([identity-proc (lambda (x) x)])
-    (lambda (exp env)
+    (lambda (exp env k)
       (cases expression exp
-	     [lit-exp (datum) datum]
+	     [lit-exp (datum) (apply-k k datum)]
 	     [var-exp (id) ;look up its value.
-		      (apply-env env 
-				 id 
-				 identity-proc ; procedure to call if id is in the environment
-				 (lambda () ; procedure to call if id not in env
-				   (apply-env-ref global-env
-					      id
-					      identity-proc
-					      (lambda () (eopl:error 'apply-env 
-								     "variable not found in environment: ~s"
-								     id)))))]
+		    (apply-env env id k (var-fail-k id k))]
 	     [app-exp (rator rands)
-		      (let ([proc-value (eval-exp rator env)]
-			    [args (eval-rands rands env)])
-			(apply-proc proc-value args))]
+                (eval-exp rator env (rator-k rands env k))
 	     [if-else-exp (con then els)
-			  (if (eval-exp con env)
-			      (eval-exp then env)
-			      (eval-exp els env))]
+			          (eval-exp con env (test-two-arm-k then els env k))]
 	     [if-exp (con then)
-		     (if (eval-exp con env)
-			 (eval-exp then env)
-			 (void))]
+		            (eval-exp con env (test-one-arm-k then env k))]
 	     [lambda-exp (declaration body) 
-			 (closure 
-			  declaration
-			  body
-			  env)]
+			          (apply-k k (closure declaration body env))]
 	     [lambda-exp-one-var (declaration body)
-				 (closure-one-var
-				  declaration
-				  body
-				  env)]
+				        (apply-k k (closure-one-var declaration body env))]
 	     [lambda-exp-improper-list (declaration body)
-				       (closure-improper-list
-					declaration
-					body
-					env)]
-		 [set!-exp (id exp)
-			(set-ref!
-				(apply-env-ref env 
-								id 
-								identity-proc 
-								(lambda () 
-								   (apply-env-ref global-env
-										  id
-										  identity-proc
-										  (lambda () (eopl:error 'apply-env 
-													 "variable not found in environment: ~s"
-													 id)))))		
-				(eval-exp exp env))]
-	     [while-exp (test bodies)
+				       (apply-k k (closure-improper-list declaration body env))]
+  		 [set!-exp (id exp)
+  				(apply-env-ref env 
+  								id
+  							  (ref-k exp env k)
+                  (set-fail-k id exp env k))]	
+	     ;;TODO
+       [while-exp (test bodies)
   			(if (eval-exp test env)
   			    (eval-bodies (append bodies (list exp)) env))]
+       ;;TODO
        [define-exp (var val)
          (top-level-eval exp)]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
+(define apply-k
+  (lambda (k . vals)
+    (cases continuation k
+      [rator-k (rands env k)
+        (eval-rands rands env (rands-k (car vals) k))]
+      [rands-k (proc-val k)
+        (apply-proc proc-val (car vals) k)]
+      [test-two-arm-k (then els env k)
+        (if (car vals)
+          (eval-exp then env k)
+          (eval-exp els env k))]
+      [test-one-arm-k (then env k)
+        (if (car vals)
+          (eval-exp then env k)
+          (apply-k k))]
+      [ref-k (exp env k)
+        (eval-exp exp env (set-ref-k (car vals) k))]
+      [set-ref-k (ref k)
+        (set-ref! ref (car vals))]
+      [find-pos-k (ls env sym succeed fail)
+        (if (number? (car vals))
+            (apply-k succeed (list-ref ls (car vals)))
+            (apply-env-ref env sym succeed fail))]
+      [index-cdr-res-k (k)
+        (if (number? (car vals))
+          (apply-k k (+ 1 (car vals)))
+          (apply-k k #f))]
+      [ref-to-deref-k (k)
+          (apply-k k (deref (car vals)))]
+      [var-fail-k (id k)
+          (apply-env-ref global-env id k (lookup-error-k id))]
+      [set-fail-k (id exp env k)
+         (apply-env-ref 
+          global-env 
+          id 
+          (ref-k exp env k) 
+          (lookup-error-k id))]
+      [lookup-error-k (id)
+          (eopl:error 'apply-env 
+                     "variable not found in environment: ~s"
+                     id)]      
+      )))
+
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
-  (lambda (rands env)
-    (map (lambda (e) (eval-exp e env)) rands)))
+  (lambda (rands env k)
+    (map-cps (lambda (e) (eval-exp e env k)) rands (lambda (v) v))))
+
 
 ;;; Evaluate the bodies returning the value of the last
+;;TODO
 (define eval-bodies
   (lambda (bodies env)
     (if (null? (cdr bodies))
@@ -100,7 +116,7 @@
 	  (eval-bodies (cdr bodies) env)))))
 
 ;;; Apply a procedure to its arguments.
-;;  TODO: User-defined procedures
+;;TODO
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
@@ -127,12 +143,15 @@
 			"Attempt to apply bad procedure: ~s" 
 			proc-value)])))
 
-(define flatten
-  (lambda (ls)
-    (cond 
-     [(null? ls) '()]
-     [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
-     [else (list ls)])))					
+(define map-cps
+  (lambda (proc ls k)
+    (if (null? ls)
+      (apply-k k '())
+      (proc (car ls)
+        (lambda (applied-car)
+          (map-cps (cdr ls)
+            (lambda (mapped-cdr)
+              (apply-k k (cons applied-car mapped-cdr)))))))))		
 					
 ;; Establishing which primitives we support
 (define *prim-proc-names*
@@ -169,6 +188,7 @@
     (set! global-env (make-init-env))))
 
 ;;; Cases out our primitive procedures
+;;TODO
 (define apply-prim-proc
   (lambda (prim-proc args)
     (case prim-proc

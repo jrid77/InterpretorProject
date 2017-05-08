@@ -111,6 +111,52 @@
    (ids (list-of symbol?))
    (bodies (list-of expression?))
    (env environment?)])
+
+(define-datatype continuation continuation?
+	[rator-k 
+		(rands (list-of expression?))
+		(env environment?)
+		(k continuation?)]
+	[rands-k
+		(proc-val scheme-value?)
+		(k continuation?)]
+	[test-two-arm-k
+		(then expression?)
+		(els expression?)
+		(env environment?)
+		(k continuation?)]
+	[test-one-arm-k
+		(then expression?)
+		(env environment?)
+		(k continuation?)]
+	[ref-k
+		(exp expression?)
+		(env environment?)
+		(k continuation?)]
+	[set-ref-k
+		(ref scheme-value?)
+		(k continuation?)]
+	[find-pos-k
+		(vals (list-of scheme-value?))
+		(env environment?)
+		(sym symbol?)
+		(succeed continuation?)
+		(fail continuation?)]
+	[index-cdr-res-k 
+		(k continuation?)]
+	[ref-to-deref-k
+		(k continuation?)]
+	[var-fail-k
+		(id scheme-value?)
+		(k continuation?)]
+	[lookup-error-k
+		(id scheme-value?)]
+	[set-fail-k
+		(id scheme-value?)
+		(exp expression?)
+		(env environment?)
+		(k continuation?)]
+	)
   
 (define scheme-value?
   (lambda (x) #t))

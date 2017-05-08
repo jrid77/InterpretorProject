@@ -107,6 +107,13 @@
      (char? exp)
      (equal? 'quote (car exp)))))
 
+(define flatten
+  (lambda (ls)
+    (cond 
+     [(null? ls) '()]
+     [(pair? ls) (append (flatten (car ls)) (flatten (cdr ls)))]
+     [else (list ls)])))	
+
 (define unparse-exp
   (lambda (exp)
     (cases expression exp
