@@ -93,12 +93,7 @@
   (extended-env-record
    (syms (list-of symbol?))
    (vals (list-of box?))
-   (env environment?))
-  (recursively-extended-env-record
-    (proc-names (list-of symbol?))
-    (idss (list-of (list-of symbol?)))
-    (bodiess (list-of (list-of expression?)))
-    (env environment?)))
+   (env environment?)))
 
 ;;; Datatype for procedures
 (define-datatype proc-val proc-val?

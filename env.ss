@@ -28,14 +28,7 @@
 				  (if (number? pos)
 				      (succeed (list-ref vals pos))
 				      (apply-env-ref env sym succeed fail))))
-     (recursively-extended-env-record (proc-names idss bodiess old-env)
-        (let ([pos (list-find-position sym proc-names)])
-          (if (number? pos)
-            (closure 
-              (list-ref idss pos)
-              (list-ref bodiess pos)
-              env)
-            (apply-env old-env sym succeed fail)))))))
+     )))
 
 (define list-find-position
   (lambda (sym los)

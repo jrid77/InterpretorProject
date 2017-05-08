@@ -38,11 +38,6 @@
 					      (lambda () (eopl:error 'apply-env 
 								     "variable not found in environment: ~s"
 								     id)))))]
-	     [let-exp (declaration body)
-		      (eval-bodies body
-				   (extend-env (map unparse-exp (map extract-let-vars declaration))
-					       (eval-rands (map extract-let-bindings declaration) env)
-					       env))]
 	     [app-exp (rator rands)
 		      (let ([proc-value (eval-exp rator env)]
 			    [args (eval-rands rands env)])
