@@ -113,6 +113,7 @@
    (env environment?)])
 
 (define-datatype continuation continuation?
+	[init-k]
 	[rator-k 
 		(rands (list-of expression?))
 		(env environment?)
@@ -154,6 +155,39 @@
 	[set-fail-k
 		(id scheme-value?)
 		(exp expression?)
+		(env environment?)
+		(k continuation?)]
+	[eval-car-k
+		(bodies (list-of expression?))
+		(env environment?)
+		(k continuation?)]
+	[while-test-k
+		(bodies (list-of expression?))
+		(exp expression?)
+		(env environment?)
+		(k continuation?)]
+	[append-while-k
+		(env environment?)
+		(k continuation?)]
+	[append-rest-result-k
+		(first scheme-value?)
+		(k continuation?)]
+	[define-global-k
+		(var scheme-value?)
+		(k continuation?)]
+	[closure-k
+		(bodies (list-of expression?))
+		(k continuation?)]
+	[truncated-k
+		(first scheme-value?)
+		(k continuation?)]
+	[improper-k
+		(bodies (list-of expression?))
+		(ids (list-of scheme-value?))
+		(env environment?)
+		(k continuation?)]
+	[extend-env-k
+		(syms (list-of scheme-value?))
 		(env environment?)
 		(k continuation?)]
 	)

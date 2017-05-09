@@ -4,8 +4,8 @@
     (empty-env-record)))
 
 (define extend-env
-  (lambda (syms vals env)
-    (extended-env-record syms (map box vals) env)))
+  (lambda (syms vals env k)
+    (map-cps box vals (extend-env-k syms env k))))
 
 (define apply-env
 	(lambda (env sym succeed fail)
@@ -32,5 +32,5 @@
   	(cond 
   		[(null? ls) (apply-k k #f)]
   		[(eqv? sym (car ls)) (apply-k k 0)]
-  		[(else (list-index sym (cdr ls)
-  							(index-cdr-res-k k)))])))
+  		[else (list-index sym (cdr ls)
+  							(index-cdr-res-k k))])))
