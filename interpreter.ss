@@ -76,14 +76,14 @@
         (if (number? (car vals))
             (apply-k succeed (list-ref ls (car vals)))
             (apply-env-ref env sym succeed fail))]
-      [index-cdr-res-k (k)
+      [index-cdr-res-k (k) ; We are not getting here
         (if (number? (car vals))
           (apply-k k (+ 1 (car vals)))
           (apply-k k #f))]
       [ref-to-deref-k (k)
           (apply-k k (deref (car vals)))]
       [var-fail-k (id k)
-          (apply-env-ref global-env id k (lookup-error-k id))]
+          (apply-env global-env id k (lookup-error-k id))]
       [set-fail-k (id exp env k)
          (apply-env-ref 
           global-env 
@@ -126,7 +126,7 @@
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env k)
-    (map-cps (lambda (e) (eval-exp e env k)) rands (lambda (v) v))))
+    (map-cps (make-cps (lambda (e) (eval-exp e env (init-k)))) rands k)))
 
 
 ;;; Evaluate the bodies returning the value of the last
@@ -143,7 +143,7 @@
     (cases proc-val proc-value
 	   [prim-proc (op) (apply-prim-proc op args k)]
 	   [closure (ids bodies env)
-        (extend-env id args env (closure-k bodies k))]
+        (extend-env ids args env (closure-k bodies k))]
 	   [closure-one-var (ids bodies env)
         (extend-env id (list args) env (closure-k bodies k))]
 	   [closure-improper-list (ids bodies env)
@@ -203,19 +203,18 @@
   (lambda (sym val k)
     (cases environment global-env
       (extended-env-record (syms vals env)
-        (set!-cps global-env (extend-env 
+        (set! global-env (extend-env 
                           (cons sym syms)
                           (cons val (map unbox vals))
                           (empty-env)
-                          (lazy-k)) 
-                          k))
+                          (init-k)) 
+                          ))
       (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
 
 (define set!-cps
   (lambda (var val k)
-    (begin
-      (set! var val)
-      (apply-k k))))
+    (display val)
+      (apply-k k (set! var val))))
 
 (define reset-global-env
   (lambda ()
