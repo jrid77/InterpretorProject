@@ -60,6 +60,10 @@
         (eval-rands rands env (rands-k (car vals) k))]
       [rands-k (proc-val k)
         (apply-proc proc-val (car vals) k)]
+	  [rands-helper-k (cdr-rands env k)
+		(eval-rands cdr-rands env (cdr-rands-helper-k (car vals) k))]
+	  [cdr-rands-helper-k (car-val k)
+		(apply-k k (cons car-val (car vals)))]
       [test-two-arm-k (then els env k)
         (if (car vals)
           (eval-exp then env k)
@@ -71,12 +75,12 @@
       [ref-k (exp env k)
         (eval-exp exp env (set-ref-k (car vals) k))]
       [set-ref-k (ref k)
-        (set-ref! ref (car vals))]
+        (apply-k k (set-ref! ref (car vals)))]
       [find-pos-k (ls env sym succeed fail)
         (if (number? (car vals))
             (apply-k succeed (list-ref ls (car vals)))
             (apply-env-ref env sym succeed fail))]
-      [index-cdr-res-k (k) ; We are not getting here
+      [index-cdr-res-k (k) 
         (if (number? (car vals))
           (apply-k k (+ 1 (car vals)))
           (apply-k k #f))]
@@ -98,7 +102,8 @@
           (eval-bodies bodies env k)]
       [while-test-k (bodies exp env k)
           (if (car vals)
-            (append-cps bodies (list exp) (append-while-k env k)))]
+            (append-cps bodies (list exp) (append-while-k env k))
+			(apply-k k))]
       [append-while-k (env k)
             (eval-bodies (car vals) env k)]
       [append-rest-result-k (first k)
@@ -121,12 +126,19 @@
           (map-cps proc rest-of-list (mapped-cdr-k (car vals) k))]
       [mapped-cdr-k (first-of-list k)
           (apply-k k (cons first-of-list (car vals)))]
+	  [map-helper-k (proc cdr-ls k)
+		  (map-helper proc cdr-ls (map-cdred-k (car vals) k))]
+	  [map-cdred-k (procced-car k)
+		  (apply-k k (cons procced-car (car vals)))]
       )))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env k)
-    (map-cps (make-cps (lambda (e) (eval-exp e env (init-k)))) rands k)))
+	(if (null? rands)
+		(apply-k k '())
+		(eval-exp (car rands) env 
+			(rands-helper-k (cdr rands) env k)))))
 
 
 ;;; Evaluate the bodies returning the value of the last
@@ -145,7 +157,7 @@
 	   [closure (ids bodies env)
         (extend-env ids args env (closure-k bodies k))]
 	   [closure-one-var (ids bodies env)
-        (extend-env id (list args) env (closure-k bodies k))]
+        (extend-env ids (list args) env (closure-k bodies k))]
 	   [closure-improper-list (ids bodies env)
           (truncate-args
             ids
@@ -227,10 +239,10 @@
       [(-) (apply-k k (apply - args))]
       [(*) (apply-k k (apply * args))]
       [(/) (apply-k k (apply / args))]
-      [(add1) (+ (1st args) 1)]
-      [(sub1) (- (1st args) 1)]
-      [(zero?) (zero? (1st args))]
-      [(not) (not (1st args))]
+      [(add1) (apply-k k (+ (1st args) 1))]
+      [(sub1) (apply-k k (- (1st args) 1))]
+      [(zero?) (apply-k k (zero? (1st args)))]
+      [(not) (apply-k k (not (1st args)))]
       [(=) (apply-k k (apply = args))]
       [(<) (apply-k k (apply < args))]
       [(>) (apply-k k (apply > args))]
@@ -280,8 +292,17 @@
       [(quotient) (apply-k k (apply quotient args))]
       [(append) (apply-k k (apply append args))]
       [(list-tail) (apply-k k (list-tail (1st args) (2nd args)))]
-      [(map) (map-cps (lambda (x) (apply-proc (car args) x (init-k))) k)]
+      [(map) (map-helper (1st args) (2nd args) k)]
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 
 		   prim-op)])))
+
+(define map-helper
+	(lambda (proc ls k)
+		(if (null? ls)
+			(apply-k k '())
+			(apply-proc 
+				proc 
+				(list (car ls))
+				(map-helper-k proc (cdr ls) k)))))
