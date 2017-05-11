@@ -190,6 +190,13 @@
 		(syms (list-of scheme-value?))
 		(env environment?)
 		(k continuation?)]
+	[map-car-k
+		(rest-of-list (list-of scheme-value?))
+		(proc procedure?)
+		(k continuation?)]
+	[mapped-cdr-k 
+		(first-of-list scheme-value?)
+		(k continuation?)]
 	)
   
 (define scheme-value?

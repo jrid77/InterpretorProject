@@ -118,6 +118,10 @@
           (begin
             (extended-env-record syms (car vals) env)
             (apply-k k))]
+      [map-car-k (rest-of-list proc k)
+          (map-cps proc rest-of-list (mapped-cdr-k (car vals) k))]
+      [mapped-cdr-k (first-of-list k)
+          (apply-k k (cons first-of-list (car vals)))]
       )))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
@@ -159,16 +163,13 @@
       (truncate-args (cdr new-ids) (cdr args) (truncated-k (car args) k)) 
         )))
 
-;; TODO
+
 (define map-cps
   (lambda (proc ls k)
     (if (null? ls)
       (apply-k k '())
-      (proc (car ls)
-        (lambda (applied-car)
-          (map-cps (cdr ls)
-            (lambda (mapped-cdr)
-              (apply-k k (cons applied-car mapped-cdr)))))))))
+      (proc (car ls) (map-car-k (cdr ls) proc k)))))
+       
 
 (define append-cps
   (lambda (l1 l2 k)
@@ -192,7 +193,8 @@
      (extend-env            
       *prim-proc-names*   
       (map prim-proc *prim-proc-names*)
-      (empty-env))))
+      (empty-env)
+      (init-k))))
 
 (define global-env (make-init-env))
 
@@ -217,8 +219,6 @@
   (lambda ()
     (set! global-env (make-init-env))))
 
-;;; Cases out our primitive procedures
-;;TODO
 (define apply-prim-proc
   (lambda (prim-proc args k)
     (case prim-proc
@@ -264,7 +264,7 @@
       [(pair?) (apply-k k (pair? (1st args)))]
       [(procedure?) (apply-k k (proc-val? (1st args)))]
       [(vector->list) (apply-k k (vector->list (1st args)))]
-      [(vector) (apply-k k (apply vector args)]
+      [(vector) (apply-k k (apply vector args))]
       [(make-vector) (apply-k k (if (null? (cdr args)) (make-vector (1st args)) (make-vector (1st args) (2nd args))))]
       [(vector-ref) (apply-k k (vector-ref (1st args) (2nd args)))]
       [(vector?) (apply-k k (vector? (1st args)))]
@@ -279,8 +279,7 @@
       [(quotient) (apply-k k (apply quotient args))]
       [(append) (apply-k k (apply append args))]
       [(list-tail) (apply-k k (list-tail (1st args) (2nd args)))]
-      ;; TODO
-      [(map)]
+      [(map) (map-cps (lambda (x) (apply-proc (car args) x (init-k))) k)]
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 

@@ -5,7 +5,7 @@
 
 (define extend-env
   (lambda (syms vals env k)
-    (map-cps box vals (extend-env-k syms env k))))
+    (map-cps (make-cps box) vals (extend-env-k syms env k))))
 
 (define apply-env
 	(lambda (env sym succeed fail)
@@ -34,3 +34,8 @@
   		[(eqv? sym (car ls)) (apply-k k 0)]
   		[else (list-index sym (cdr ls)
   							(index-cdr-res-k k))])))
+
+(define make-cps
+  (lambda (proc)
+    (lambda (arg k)
+      (apply-k k (proc arg)))))
