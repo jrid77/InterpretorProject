@@ -116,9 +116,7 @@
               env
               (closure-k bodies k))]
       [extend-env-k (syms env k)
-          (begin
-            (extended-env-record syms (car vals) env)
-            (apply-k k))]
+            (apply-k k (extended-env-record syms (car vals) env))]
       [map-car-k (rest-of-list proc k)
           (map-cps proc rest-of-list (mapped-cdr-k (car vals) k))]
       [mapped-cdr-k (first-of-list k)
@@ -197,7 +195,7 @@
       *prim-proc-names*   
       (map prim-proc *prim-proc-names*)
       (empty-env)
-      (lazy-k))))
+      (init-k))))
 
 (define global-env (make-init-env))
 
