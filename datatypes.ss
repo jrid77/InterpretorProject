@@ -114,6 +114,7 @@
 
 (define-datatype continuation continuation?
 	[init-k]
+	[lazy-k]
 	[rator-k 
 		(rands (list-of expression?))
 		(env environment?)

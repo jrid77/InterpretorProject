@@ -55,6 +55,7 @@
   (lambda (k . vals)
     (cases continuation k
       [init-k () (car vals)]
+      [lazy-k () (void)]
       [rator-k (rands env k)
         (eval-rands rands env (rands-k (car vals) k))]
       [rands-k (proc-val k)
@@ -188,13 +189,15 @@
 (define *global-env-vars* (append *prim-proc-names* '()))
 
 ;; Initializes a global environment with only primitives
+
+;; TODO
 (define make-init-env
   (lambda ()
      (extend-env            
       *prim-proc-names*   
       (map prim-proc *prim-proc-names*)
       (empty-env)
-      (init-k))))
+      (lazy-k))))
 
 (define global-env (make-init-env))
 
@@ -205,8 +208,9 @@
         (set!-cps global-env (extend-env 
                           (cons sym syms)
                           (cons val (map unbox vals))
-                          (empty-env)))
-                  k)
+                          (empty-env)
+                          (lazy-k)) 
+                          k))
       (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
 
 (define set!-cps
