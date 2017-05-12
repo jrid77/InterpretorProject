@@ -2,23 +2,19 @@
 (define rep      
   (lambda ()
     (display "--> ")
-    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))) (init-k))])
+    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
       (eopl:pretty-print answer) (newline)
       (rep))))
 
 ;;; Evaluates one expression in the global environment for the grading server
 (define eval-one-exp
   (lambda (x) 
-    (top-level-eval (syntax-expand (parse-exp x)) (init-k))))
+    (top-level-eval (syntax-expand (parse-exp x)))))
 
 ;;; Evaluates a form in the global environment
-;; later we may add things that are not expressions.
 (define top-level-eval
-  (lambda (form k)
-    (cases expression form
-     (define-exp (var val)
-        (eval-exp val global-env (define-global-k var k)))     
-      (else (eval-exp form (empty-env) k)))))
+  (lambda (form)
+	(eval-exp form (empty-env) (init-k))))
 
 ;;; Main component of the interpreter
 (define eval-exp
@@ -47,22 +43,17 @@
        [while-exp (test bodies)
   			 (eval-exp test env (while-test-k bodies exp env k))]
        [define-exp (var val)
-         (top-level-eval exp k)]
+         (eval-exp val env (define-global-k var k))]
 	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 (define apply-k
   (lambda (k . vals)
     (cases continuation k
       [init-k () (car vals)]
-      [lazy-k () (void)]
       [rator-k (rands env k)
         (eval-rands rands env (rands-k (car vals) k))]
       [rands-k (proc-val k)
         (apply-proc proc-val (car vals) k)]
-	  [rands-helper-k (cdr-rands env k)
-		(eval-rands cdr-rands env (cdr-rands-helper-k (car vals) k))]
-	  [cdr-rands-helper-k (car-val k)
-		(apply-k k (cons car-val (car vals)))]
       [test-two-arm-k (then els env k)
         (if (car vals)
           (eval-exp then env k)
@@ -125,22 +116,17 @@
           (map-cps proc rest-of-list (mapped-cdr-k (car vals) k))]
       [mapped-cdr-k (first-of-list k)
           (apply-k k (cons first-of-list (car vals)))]
-	  [map-helper-k (proc cdr-ls k)
-		  (map-helper proc cdr-ls (map-cdred-k (car vals) k))]
-	  [map-cdred-k (procced-car k)
-		  (apply-k k (cons procced-car (car vals)))]
-    [set-global-env-k (k)
-      (apply-k k (set! global-env (car vals)))]
+	  [set-global-env-k (k)
+		  (apply-k k (set! global-env (car vals)))]
       )))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
 (define eval-rands
   (lambda (rands env k)
-	(if (null? rands)
-		(apply-k k '())
-		(eval-exp (car rands) env 
-			(rands-helper-k (cdr rands) env k)))))
-
+	(map-cps (lambda (exp k)
+				(eval-exp exp env k))
+				rands
+				k)))
 
 ;;; Evaluate the bodies returning the value of the last
 (define eval-bodies
@@ -292,7 +278,7 @@
       [(quotient) (apply-k k (apply quotient args))]
       [(append) (apply-k k (apply append args))]
       [(list-tail) (apply-k k (list-tail (1st args) (2nd args)))]
-      [(map) (map-helper (1st args) (2nd args) k)]
+      [(map) (map-cps (make-proc-cps (1st args)) (2nd args) k)]
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [(call/cc) 
           (apply-proc (car args) (list (continuation-proc k)) k)]
@@ -301,11 +287,7 @@
 		   "Bad primitive procedure name: ~s" 
 		   prim-op)])))
 
-(define map-helper
-	(lambda (proc ls k)
-		(if (null? ls)
-			(apply-k k '())
-			(apply-proc 
-				proc 
-				(list (car ls))
-				(map-helper-k proc (cdr ls) k)))))
+	(define make-proc-cps
+		(lambda (proc)
+			(lambda (exp k)
+				(apply-proc proc (list exp) k))))

@@ -22,6 +22,12 @@
       (load "16_test.ss")
       (r)
       (newline)
+
+      (display "18 Tests")
+      (newline)
+      (load "18_test.ss")
+      (r)
+      (newline)
       )
     )
   )

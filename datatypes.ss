@@ -116,20 +116,12 @@
 
 (define-datatype continuation continuation?
 	[init-k]
-	[lazy-k]
 	[rator-k 
 		(rands (list-of expression?))
 		(env environment?)
 		(k continuation?)]
 	[rands-k
 		(proc-val scheme-value?)
-		(k continuation?)]
-	[rands-helper-k
-		(cdr-rands (list-of expression?))
-		(env environment?)
-		(k continuation?)]
-	[cdr-rands-helper-k
-		(car-val scheme-value?)
 		(k continuation?)]
 	[test-two-arm-k
 		(then expression?)
@@ -206,13 +198,6 @@
 		(k continuation?)]
 	[mapped-cdr-k 
 		(first-of-list scheme-value?)
-		(k continuation?)]
-	[map-helper-k
-		(proc proc-val?)
-		(cdr-ls (list-of scheme-value?))
-		(k continuation?)]
-	[map-cdred-k 
-		(procced-car scheme-value?)
 		(k continuation?)]
 	[set-global-env-k 
 		(k continuation?)]
