@@ -22,7 +22,6 @@
 
 ;;; Main component of the interpreter
 (define eval-exp
-  (let ([identity-proc (lambda (x) x)])
     (lambda (exp env k)
       (cases expression exp
 	     [lit-exp (datum) (apply-k k datum)]
@@ -39,7 +38,7 @@
 	     [lambda-exp-one-var (declaration body)
 				        (apply-k k (closure-one-var declaration body env))]
 	     [lambda-exp-improper-list (declaration body)
-				       (apply-k k (closure-improper-list declaration body env))]
+				        (apply-k k (closure-improper-list declaration body env))]
   		 [set!-exp (id exp)
   				(apply-env-ref env 
   								id
@@ -49,7 +48,7 @@
   			 (eval-exp test env (while-test-k bodies exp env k))]
        [define-exp (var val)
          (top-level-eval exp k)]
-	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
+	     [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 (define apply-k
   (lambda (k . vals)
@@ -130,6 +129,8 @@
 		  (map-helper proc cdr-ls (map-cdred-k (car vals) k))]
 	  [map-cdred-k (procced-car k)
 		  (apply-k k (cons procced-car (car vals)))]
+    [set-global-env-k (k)
+      (apply-k k (set! global-env (car vals)))]
       )))
 
 ;;; Evaluate the list of operands (expressions), putting results into a list
@@ -163,6 +164,8 @@
             ids
             args
             (improper-k bodies ids env k))]
+     [continuation-proc (k)
+          (apply-k k (car args))]
 	   [else (error 'apply-proc
 			"Attempt to apply bad procedure: ~s" 
 			proc-value)])))
@@ -194,13 +197,11 @@
       car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr list-tail
       list null? assq eq? eqv? equal? atom? length list->vector list? pair? procedure?
       vector->list vector make-vector vector-ref vector? number? symbol? zero? append
-      set-car! set-cdr! vector-set! display newline map apply member quotient void))
+      set-car! set-cdr! vector-set! display newline map apply member quotient void call/cc))
 
 (define *global-env-vars* (append *prim-proc-names* '()))
 
 ;; Initializes a global environment with only primitives
-
-;; TODO
 (define make-init-env
   (lambda ()
      (extend-env            
@@ -215,17 +216,16 @@
   (lambda (sym val k)
     (cases environment global-env
       (extended-env-record (syms vals env)
-        (set! global-env (extend-env 
-                          (cons sym syms)
-                          (cons val (map unbox vals))
-                          (empty-env)
-                          (init-k)) 
-                          ))
+        (extend-env 
+          (cons sym syms)
+          (cons val (map unbox vals))
+          (empty-env)
+          (set-global-env-k k)) 
+          )
       (else (eopl:error 'mutate-global-env "How the hell did we get here? ~s" global-env)))))
 
 (define set!-cps
   (lambda (var val k)
-    (display val)
       (apply-k k (set! var val))))
 
 (define reset-global-env
@@ -294,6 +294,8 @@
       [(list-tail) (apply-k k (list-tail (1st args) (2nd args)))]
       [(map) (map-helper (1st args) (2nd args) k)]
       [(apply) (apply-proc (1st args) (2nd args) k)]
+      [(call/cc) 
+          (apply-proc (car args) (list (continuation-proc k)) k)]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 
 		   prim-op)])))

@@ -110,7 +110,9 @@
   [closure-improper-list
    (ids (list-of symbol?))
    (bodies (list-of expression?))
-   (env environment?)])
+   (env environment?)]
+  [continuation-proc 
+   (k continuation?)])
 
 (define-datatype continuation continuation?
 	[init-k]
@@ -211,6 +213,8 @@
 		(k continuation?)]
 	[map-cdred-k 
 		(procced-car scheme-value?)
+		(k continuation?)]
+	[set-global-env-k 
 		(k continuation?)]
 	)
   
