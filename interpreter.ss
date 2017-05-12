@@ -196,7 +196,7 @@
   '(+ - * / add1 sub1 cons = < > <= >= not
       car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr list-tail
       list null? assq eq? eqv? equal? atom? length list->vector list? pair? procedure?
-      vector->list vector make-vector vector-ref vector? number? symbol? zero? append
+      vector->list vector make-vector vector-ref vector? number? symbol? zero? append exit-list
       set-car! set-cdr! vector-set! display newline map apply member quotient void call/cc))
 
 (define *global-env-vars* (append *prim-proc-names* '()))
@@ -296,6 +296,7 @@
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [(call/cc) 
           (apply-proc (car args) (list (continuation-proc k)) k)]
+      [(exit-list) args]
       [else (error 'apply-prim-proc 
 		   "Bad primitive procedure name: ~s" 
 		   prim-op)])))
